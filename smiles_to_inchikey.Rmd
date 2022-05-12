@@ -1,0 +1,257 @@
+---
+title: "smiles_to_inchikey"
+author: "Fang Liu"
+date: "5/10/2022"
+output: html_document
+---
+
+Load required libraries
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(readxl)
+```
+
+# SMILES for original tox21 data
+```{r}
+#load original data file: 7,170 compounds from clustering
+filtered_tox21 = read.delim("./data/clusters.txt") #cas, cluster
+
+#8112 observations
+tox21_without_salts = read.delim("./data/tox21_10k_cas_smiles_without_salts.txt") %>% 
+  janitor::clean_names() %>% 
+  rename(cas = cas_rn,
+         smiles = structure_smiles_2d_qsar)
+
+## Combine data using the cas as the "key" using smiles w/o salts data file
+data_combined = 
+  left_join(filtered_tox21, tox21_without_salts, by = "cas") %>% 
+  distinct() #7170 compounds
+
+# 7170 compounds = 6503 + 667
+
+#THIS IS THE FIRST HALF
+not_missing = data_combined %>% remove_missing() #6503
+colnames(not_missing) # "cas"     "cluster" "smiles" 
+
+#Find which compounds/drugs are actually missing the "SMILES" 
+missing = data_combined %>% filter(is.na(smiles)) %>% 
+  select(-smiles) #667
+```
+
+
+## use the aggregated data to see if we can find additional smiles
+```{r}
+aggregated_tox21_unique = read_delim("./data/tox21_aggregated.txt",
+delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>% 
+  janitor::clean_names() %>% 
+  rename(ncgc = sample_id) %>% 
+  select(cas, smiles) %>%
+  unique()
+
+#find the smiles for the data without smiles [667 - 140 = 527]
+data_wo_smiles = 
+  left_join(missing, aggregated_tox21_unique, by = "cas") %>% 
+  distinct() %>% 
+  remove_missing() %>% 
+  mutate(smiles_long = map_chr(str_split(smiles, "\\."), ~ .[which.max(nchar(.))])) %>% 
+  select(-smiles) %>% 
+  rename(smiles = smiles_long)
+
+## Combine the first half and 2nd half 
+data_final = bind_rows(not_missing, data_wo_smiles)
+length(unique(data_final$cas)) #7030
+
+#create output file (cas, cluster, smiles) --> used in Python
+write_csv(data_final, "./results/cluster_and_smiles_05_10.csv")
+```
+
+
+
+# SMILES for Pharos
+
+```{r}
+library(tidyverse)
+pt1 = read.csv("./data/pharos_all_target_ligands-p1.csv")
+pt2 = read.csv("./data/pharos_all_target_ligands-p2.csv")
+
+#603,477
+pharos_combined = bind_rows(pt1, pt2)
+
+# data cleaning for pharos data
+pharos_final = pharos_combined %>% 
+  janitor::clean_names() %>% 
+  rename(chembl = "ligand_ch_embl_id",
+         smiles = "ligand_smiles") %>% 
+  mutate(smiles_short = map_chr(str_split(smiles, "\\."), ~ .[which.max(nchar(.))])) %>%
+  select(smiles_short, symbol) %>% 
+  rename(smiles = smiles_short)
+
+#save to .csv file
+write.csv(pharos_final, "./results/pharos_symbol_05_10.csv") 
+#NOTE: THIS WILL BE INPUT FOR THE PYTHON PROGRAM
+```
+
+***
+
+
+# Use the results from RDKit to find the InChIKey for each compound!
+
+## Load RDKit result for Pharos 
+```{r}
+pharos_inchikey = read.csv("./data/rdkit/pharos_to_inchikey_05_10.csv") %>% 
+  mutate(short_key = str_sub(inchikey, 1, 14)) %>% 
+  unique()
+
+colnames(pharos_inchikey)
+# "smiles"   "symbol"   "inchikey" "short_key"
+```
+
+## Load RDKit result for Tox21 compounds
+```{r}
+cas_inchikey = read.csv("./data/rdkit/smi_to_inchikey_05_10.csv") %>% 
+  mutate(short_key = str_sub(inchikey, 1, 14)) #7030 compounds
+
+inchikey = cas_inchikey %>% 
+  select(cas, cluster, inchikey, short_key) %>% 
+  distinct() %>% 
+  drop_na() #7017 compounds
+
+colnames(inchikey)
+#"cas"      "cluster"  "inchikey" "short_key"
+```
+
+## Join the two datasets
+```{r}
+#left_join means only keep if it is in the inchikey dataset!
+data_joined = left_join(inchikey, pharos_inchikey, by = "short_key")
+colnames(data_joined)
+
+data_distinct = data_joined %>% 
+  rename(target_gene = "symbol") %>% 
+  select(cas, cluster, inchikey.x, short_key, target_gene) %>% 
+  distinct() %>% 
+  drop_na() %>% 
+  filter(!target_gene == "9-Sep") %>% 
+  filter(!target_gene == "") %>% 
+  rename(inchikey = inchikey.x)
+
+#write to output
+write.csv(data_distinct, "./results/inchikey/pharos_inchikey.csv")
+```
+
+**NOTE: ** data_distinct is the final data set! It contains the original cas compound, the cluster it belongs to, its inchikey (found using RDkit smiles -> inchikey conversion), and a list of gene targets from Pharos. 
+
+# inchikey for drug repurposing hub
+```{r}
+# data from Broad institute (this is data from Chunxu)
+broad_reformatted <- read_delim("./data/broad_reformatted.txt",
+"\t", escape_double = FALSE, trim_ws = TRUE) %>% 
+  janitor::clean_names() %>% 
+  mutate(short_key = str_sub(in_key, 1, 14))
+
+# output from Python
+inchikey <- read.csv("./data/rdkit/smi_to_inchikey_05_10.csv") %>% 
+  mutate(short_key = str_sub(inchikey, 1, 14)) #this is output from Python
+
+inchikey_present = inchikey %>% filter(!is.na(inchikey)) #7017
+inchikey_absent = inchikey %>% filter(is.na(inchikey)) #13
+
+#join the two data set using inchikey as identifier
+data_combined = left_join(inchikey_present, broad_reformatted, 
+                          by = "short_key") %>% 
+  select(cas, cluster, inchikey, short_key, target_gene) %>%
+  unique()
+
+#find how many unique compounds have any gene information
+data_unique = data_combined %>% 
+  drop_na() 
+
+length(unique(data_unique$cas)) #1346 unique CAS/compounds
+length(unique(data_unique$target_gene)) #1303 unique CAS/compounds
+
+#write to file
+write.csv(data_unique, "./results/inchikey/drug_hub_inchikey.csv")
+```
+
+
+# Merge Pharos and Drug Repurposing Hub
+```{r}
+drug_hub = read.csv("./results/inchikey/drug_hub_inchikey.csv")
+pharos = read.csv("./results/inchikey/pharos_inchikey.csv") 
+
+#length(unique(drug_hub$target_gene)) #999 genes
+#length(unique(pharos$target_gene)) #850 genes
+
+#length(unique(drug_hub$cas)) #684 compounds
+#length(unique(pharos$cas)) #931 compounds
+
+#stack the tables on top of each other 
+pharos_and_hub = rbind(drug_hub, pharos)
+
+#data cleaning to get rid of duplicates -> FINAL data set!! 
+pharos_hub_clean = pharos_and_hub %>% 
+  select(-1, -short_key) %>%  
+  unique() %>% 
+  arrange(cas)
+
+#length(unique(pharos_hub_clean$target_gene)) #1629 unique genes
+#length(unique(pharos_hub_clean$cas)) #1829 unique genes
+
+#write the combined data to output
+write.csv(pharos_hub_clean, "./results/inchikey/pharos_and_drughub.csv")
+```
+
+
+# Create `data_w_identifiers.csv' data sheet
+```{r}
+#7030 compounds
+#Inchikey are for the parent form, NOT SALT form!
+cas_inchikey = read.csv("./data/rdkit/smi_to_inchikey_05_10.csv") %>% 
+  rename(parent_smiles = smiles)
+
+#aggregated data has pubchem_cid and sample_name,and the salt verison of smiles
+aggregated_tox21_unique = read_delim("./data/tox21_aggregated.txt",
+delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>% 
+  janitor::clean_names() %>% 
+  rename(ncgc = sample_id) %>% 
+  select(cas, pubchem_cid, sample_name,smiles) %>%
+  unique()
+
+data_combined = left_join(cas_inchikey, aggregated_tox21_unique, by = "cas") %>% 
+  select(cluster, cas, pubchem_cid, sample_name, smiles, parent_smiles, inchikey) %>% 
+  unique()
+#length(unique(data_combined$cas))
+
+# add the gene list for each compound (uses the combined pharos & drug hub data)
+data_temp = left_join(data_combined, pharos_hub_clean %>% select(cas, target_gene), by = "cas") 
+
+# use hgnc data to find add the gene name for each compound
+hgnc_data <- read_delim("./data/hgnc_data.txt",
+delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>% 
+  janitor::clean_names() %>% 
+  rename(target_gene = approved_symbol) %>% 
+  select(-1) %>%  #remove hgnc_ids
+  unique() 
+
+#left_join
+data_w_identifiers <- left_join(data_temp, hgnc_data, by="target_gene")
+#length(unique(data_w_identifiers$cas))
+
+write.csv(data_w_identifiers, "./results/data_w_identifiers_05_12.csv")
+```
+
+
+# Explore the data with identifiers datasheet...
+```{r}
+w = data_w_identifiers %>% 
+  filter(cluster == 94)
+
+#see which compounds has no target...
+compounds_no_target = data_w_identifiers %>% 
+  filter(is.na(target_gene)) %>% 
+  unique()
+
+length(unique(compounds_no_target$cas)) #5201 no gene + 1829 gene = 7030 compounds 
+```
