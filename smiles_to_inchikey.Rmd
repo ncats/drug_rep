@@ -5,6 +5,9 @@ date: "5/10/2022"
 output: html_document
 ---
 
+
+This file **identify the compound-gene relationships** for the 7170 compounds (8971 compounds --> data cleaning & keeping only compounds with complete bioassay data --> 7,170 compounds) using data from Pharos and Drug Repurposing Hub. **7,030** compounds with smiles (6503 from parent smiles list and 527 from the aggregated tox21 data). 
+
 Load required libraries
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -13,7 +16,7 @@ library(tidyverse)
 library(readxl)
 ```
 
-# SMILES for original tox21 data
+# SMILES for original tox21 data; [use Ruili's parent smiles list]
 ```{r}
 #load original data file: 7,170 compounds from clustering
 filtered_tox21 = read.delim("./data/clusters.txt") #cas, cluster
@@ -29,7 +32,7 @@ data_combined =
   left_join(filtered_tox21, tox21_without_salts, by = "cas") %>% 
   distinct() #7170 compounds
 
-# 7170 compounds = 6503 + 667
+# 7170 compounds = 6503 not missing smiles + 667 missing smiles
 
 #THIS IS THE FIRST HALF
 not_missing = data_combined %>% remove_missing() #6503
@@ -41,16 +44,18 @@ missing = data_combined %>% filter(is.na(smiles)) %>%
 ```
 
 
-## use the aggregated data to see if we can find additional smiles
+## use the Tox21 aggregated data to see if we can find smiles for the "missing" data above
 ```{r}
+#clean the aggregated data 
 aggregated_tox21_unique = read_delim("./data/tox21_aggregated.txt",
 delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>% 
   janitor::clean_names() %>% 
-  rename(ncgc = sample_id) %>% 
   select(cas, smiles) %>%
   unique()
 
-#find the smiles for the data without smiles [667 - 140 = 527]
+colnames(aggregated_tox21_unique) # "cas"    "smiles"
+
+#find the smiles for the "missing" data (667 - 140 missing = 527 not missing)
 data_wo_smiles = 
   left_join(missing, aggregated_tox21_unique, by = "cas") %>% 
   distinct() %>% 
@@ -58,6 +63,8 @@ data_wo_smiles =
   mutate(smiles_long = map_chr(str_split(smiles, "\\."), ~ .[which.max(nchar(.))])) %>% 
   select(-smiles) %>% 
   rename(smiles = smiles_long)
+#remove_missing() removes all non-complete rows
+
 
 ## Combine the first half and 2nd half 
 data_final = bind_rows(not_missing, data_wo_smiles)
@@ -65,6 +72,17 @@ length(unique(data_final$cas)) #7030
 
 #create output file (cas, cluster, smiles) --> used in Python
 write_csv(data_final, "./results/cluster_and_smiles_05_10.csv")
+```
+
+#check the characteristics of the 140 cmps with missing smiles
+```{r, eval = FALSE}
+data_no_smiles = 
+  left_join(missing, aggregated_tox21_unique, by = "cas") %>% 
+  distinct() %>% 
+  filter(is.na(smiles)) %>% 
+  filter(str_detect(cas, "NOCAS"))
+
+# 140 cmps w/o smiles = 118 "NOCAS" + 22 "oils?"
 ```
 
 
@@ -113,6 +131,9 @@ colnames(pharos_inchikey)
 cas_inchikey = read.csv("./data/rdkit/smi_to_inchikey_05_10.csv") %>% 
   mutate(short_key = str_sub(inchikey, 1, 14)) #7030 compounds
 
+#cas_inchikey %>% filter(is.na(inchikey)) #13 cmps without inchikey
+#7030 = 13 w/o inchikey + 7017 w/inchikey
+
 inchikey = cas_inchikey %>% 
   select(cas, cluster, inchikey, short_key) %>% 
   distinct() %>% 
@@ -120,6 +141,8 @@ inchikey = cas_inchikey %>%
 
 colnames(inchikey)
 #"cas"      "cluster"  "inchikey" "short_key"
+
+#length(unique(inchikey$cas))
 ```
 
 ## Join the two datasets
@@ -181,11 +204,11 @@ write.csv(data_unique, "./results/inchikey/drug_hub_inchikey.csv")
 drug_hub = read.csv("./results/inchikey/drug_hub_inchikey.csv")
 pharos = read.csv("./results/inchikey/pharos_inchikey.csv") 
 
-#length(unique(drug_hub$target_gene)) #999 genes
-#length(unique(pharos$target_gene)) #850 genes
+#length(unique(drug_hub$target_gene)) 
+#length(unique(pharos$target_gene)) 
 
-#length(unique(drug_hub$cas)) #684 compounds
-#length(unique(pharos$cas)) #931 compounds
+#length(unique(drug_hub$cas)) 
+#length(unique(pharos$cas)) 
 
 #stack the tables on top of each other 
 pharos_and_hub = rbind(drug_hub, pharos)
@@ -197,10 +220,34 @@ pharos_hub_clean = pharos_and_hub %>%
   arrange(cas)
 
 #length(unique(pharos_hub_clean$target_gene)) #1629 unique genes
-#length(unique(pharos_hub_clean$cas)) #1829 unique genes
+#length(unique(pharos_hub_clean$cas)) #1829 unique compounds
 
 #write the combined data to output
 write.csv(pharos_hub_clean, "./results/inchikey/pharos_and_drughub.csv")
+```
+
+
+#check how many of these compounds are drugs/EPA/NTP
+```{r}
+tox21_aggregated <- read_delim("./data/tox21_aggregated.txt",
+"\t", escape_double = FALSE, trim_ws = TRUE) %>% 
+  janitor::clean_names() %>% 
+  select(cas, tox21_id, sample_name) %>% 
+  unique() %>% 
+  mutate(type = as.numeric(str_sub(tox21_id, 7, 7))) %>% 
+  mutate(
+    origin = case_when(
+      type == 1 ~ "drug",
+      type == 2 ~ "NTP",
+      type == 3 ~ "EPA",
+      type == 4 ~ "toxic")
+  )
+
+cmp_origin = left_join(pharos_hub_clean, tox21_aggregated, by="cas") %>% select(cas, origin) %>%
+  unique() %>% 
+  filter(origin == "drug")
+  
+length(unique(cmp_origin$cas))
 ```
 
 
@@ -239,7 +286,16 @@ delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
 data_w_identifiers <- left_join(data_temp, hgnc_data, by="target_gene")
 #length(unique(data_w_identifiers$cas))
 
-write.csv(data_w_identifiers, "./results/data_w_identifiers_05_12.csv")
+write.csv(data_w_identifiers, "./results/data_w_identifiers_05_12.csv") 
+#7030 unique compounds
+
+
+test = data_w_identifiers %>% 
+  filter(cluster == 1)
+
+length(unique(test$cas)) #32 unique compounds in cluster #1
+
+length(unique(data_w_identifiers$cas))
 ```
 
 
@@ -250,7 +306,7 @@ w = data_w_identifiers %>%
 
 #see which compounds has no target...
 compounds_no_target = data_w_identifiers %>% 
-  filter(is.na(target_gene)) %>% 
+  filter(!is.na(target_gene)) %>% 
   unique()
 
 length(unique(compounds_no_target$cas)) #5201 no gene + 1829 gene = 7030 compounds 
