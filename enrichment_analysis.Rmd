@@ -1,11 +1,11 @@
 ---
 title: "enrichment_analysis"
 author: "Fang Liu"
-date: "5/10/2022"
+date: "6/10/2022"
 output: html_document
 ---
 
-> This `enrichment_analysis.Rmd` file uses data from the drug repurposing hub and pharos to identify enriched gene targets for each cluster. 
+> This `enrichment_analysis.Rmd` file uses compound-gene relationships (pulled from the drug repurposing hub and Pharos) to identify a list of enriched gene targets for each cluster. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -18,6 +18,7 @@ library(ClassComparison) #for 'Bum'
 ```{r}
 pharos_and_hub = read.csv("./results/inchikey/pharos_and_drughub.csv") %>% 
   select(cas, cluster, target_gene)
+#note: from the 'smiles_to_inchikey.Rmd'
 
 length(unique(pharos_and_hub$target_gene)) #1629 unique genes
 length(unique(pharos_and_hub$cas)) #1829 unique compounds
@@ -46,7 +47,7 @@ compound_cluster_freq = pharos_and_hub %>%
 #test if the above is right --> YES, WORKS!
 #pharos_and_hub %>% filter(cluster == 8) %>% select(-target_gene) %>% unique() %>% count()
 
-#sum(compound_cluster_freq$cluster_size) #1101
+#sum(compound_cluster_freq$cluster_size) #1829
 ```
 
 # find gene frequency for each cluster
@@ -58,7 +59,7 @@ pharos_and_hub %>%
   group_by(cluster, target_gene) %>% 
   summarize(n_genes = n())
 
-#length(unique(gene_within_cluster$target_gene))
+#length(unique(gene_within_cluster$target_gene)) #1629 unique gene targets
 ```
 
 # create final dataset 
@@ -112,7 +113,7 @@ cutoffSignificant(a, alpha=0.01,by='FDR')
 #If p-value is less than 0.008570463, than it is significant.
 significant <- selectSignificant(a, alpha=0.01, by='FDR') 
 countSignificant(a, 0.05, by='FDR')
-countSignificant(a, 0.01, by='FDR') #1050
+countSignificant(a, 0.01, by='FDR') #number of significant p-values
 
 #add significant column to results
 data_fin$significant <- significant
@@ -139,5 +140,6 @@ data_w_gene <- left_join(data_fin, hgnc_data, by="target_gene") %>%
   select(cluster, target_gene, approved_name, everything())
 
 #output the results
-write.csv(data_w_gene, "./results/enrichment_analysis_results_05_12.csv")
+write.csv(data_w_gene, "./results/enrichment_analysis_results_06_10.csv")
+
 ```
