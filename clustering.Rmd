@@ -1,0 +1,139 @@
+---
+title: "clustering"
+author: "Fang Liu"
+date: "6/10/2022"
+output: html_document
+---
+
+First, load the required libraries 
+```{r setup, message=FALSE}
+library(readxl)
+library(kohonen)
+library(tidyverse)
+library(factoextra)
+library(RColorBrewer)
+
+library(tidyverse)
+library(caret)
+library(rpart.plot) # for creating classification tree outputs
+library(glmnet)
+library(Amelia)
+library(pROC) #for calculating ROC/AUC
+library(gbm)
+library(stats)
+library(factoextra)
+library(cluster)
+```
+
+Next, load in the data
+```{r load_data, warning=FALSE, message=FALSE}
+tox21 <- read.delim("./data/tox21_data.txt")
+```
+
+## Data Cleaning
+Change rows with 'x' to NA and filter out drugs/chemicals with incomplete data using the **complete.case()** which returns a logical vector indicating which cases don't have missing values & returns ALL columns of the original data. Note that the # of rows dropped from 8971 to 7170.
+```{r data_wrangling}
+#replicate data and change rows with 'x' to NA 
+new_df <- tox21
+new_df[new_df == 'x'] <- NA  
+data_filtered <- new_df[complete.cases(new_df),] 
+
+#all columns are character, need to convert all columns to numerical
+data_numerical <- as.data.frame(sapply(data_filtered[-c(1,2)], as.numeric)) 
+
+#rejoin the CAS ID and bioassay data into a data frame 
+final_data =
+  data.frame(data_filtered$Structure.ID, data_numerical) %>% 
+  janitor::clean_names() %>% 
+  rename(structure_id = data_filtered_structure_id) 
+
+#write to output
+#write.csv(final_data, file = "results/tox21_data_cleaned.csv", row.names = FALSE)
+#test <- read_csv("./results/tox21_data_cleaned.csv")
+```
+
+
+## K-means Clustering
+```{r}
+set.seed(100)
+
+# Center and scale data
+set.up.preprocess<-preProcess(final_data, method=c("center", "scale"))
+transformed.vals<-predict(set.up.preprocess, final_data) %>% select(-1) #drop the CASRNs
+
+# Conduct a gap statistic analysis to determine optimal number of clusters 
+gap_stat<-clusGap(transformed.vals, FUN=kmeans, nstart=10, K.max=2, B=10, iter.max=50) 
+print(gap_stat, method="firstmax")
+fviz_gap_stat(gap_stat) 
+
+
+```
+
+## SOM 
+### Scaling 
+SOM requires that ALL numerical values be scaled; thus, scale the data and make sure that the mean of each variable is 0.
+```{r scale_data, results='hide'}
+scaled_data <- scale(final_data[, -1]) #scale all columns except the first one 
+summary(scaled_data) #check if scaling was successful(mean = zero)
+```
+
+### Create Grid 
+Next, we can create and specify the grid to use for SOM.
+```{r create_grid, results='hide'}
+set.seed(123) #ensures reproducibility 
+
+#create grid 
+g <- somgrid(xdim = 12, ydim = 12, topo = "hexagonal", neighbourhood.fct = "gaussian")
+
+#create map
+map <- som(scaled_data, grid = g, alpha = c(0.05, 0.01), radius = 1, rlen = 100)
+```
+
+
+Plot our maps to see results.
+```{r plot}
+#reverse color (red = more)
+colors <- function(n, alpha = 1) {
+  rev(heat.colors(n, alpha))
+}
+
+plot(map, type = "codes") #shows the code book vectors; default
+plot(map, type = "counts", palette.name = colors, heatkey = TRUE) #shows the # of objects mapped to the individual units
+
+plot(map, type = "mapping", pchs = 20)
+#symbols to plot when type equals "mapping", pchs = 20 means a filled circle 
+plot(map, type = "dist.neighbours", palette.name = colors) #mapping distance between nodes; U-matrix?
+
+#add cluster boundaries
+#data.hc <- cutree(hclust(object.distances(map, "codes")), 2)
+#add.cluster.boundaries(map, data.hc)
+```
+
+#Base R + scaled data 
+```{r}
+scaled_data_w_cluster <- cbind(scaled_data, as.data.frame(map$unit.classif)) 
+cluster_assignment_scaled <- scaled_data_w_cluster %>%
+  rename(cluster = 'map$unit.classif') %>% 
+  arrange(cluster)
+
+new_data = cluster_assignment_scaled %>% 
+  filter(cluster %in% c(9)) %>% 
+  select(-cluster) 
+
+data_matrix = as.matrix(new_data)
+
+color <- colorRampPalette(brewer.pal(9, name = "RdBu"))(243) #BuPu
+
+heatmap(data_matrix, cexRow=0.8, cexCol = 0.25, col = color, Colv = NA, Rowv = NA)
+
+#Colv = NA, Rowv = NA
+
+#heatmap(data_matrix,Rowv = NA, Colv = NA, cexRow=1, cexCol = 0.40)   
+```
+
+
+```{r}
+#write.csv(colnames(new_data), file = "results/clusters_names.csv")
+```
+
+

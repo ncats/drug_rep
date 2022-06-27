@@ -6,7 +6,9 @@ output: html_document
 ---
 
 
-This file **identify the compound-gene relationships** for the 7170 compounds (8971 compounds --> data cleaning & keeping only compounds with complete bioassay data --> 7,170 compounds) using data from Pharos and Drug Repurposing Hub. **7,030** compounds with smiles (6503 from parent smiles list and 527 from the aggregated tox21 data). 
+> This file **identify the compound-gene relationships** for the 7170 compounds (recall: 8971 original compounds --> data cleaning & keeping only compounds with complete bioassay data --> 7,170 compounds) using data from Pharos and Drug Repurposing Hub. **7,030** compounds with smiles (6503 from parent smiles list and 527 from the aggregated tox21 data). 
+
+***
 
 Load required libraries
 ```{r setup, include=FALSE}
@@ -20,6 +22,7 @@ library(readxl)
 ```{r}
 #load original data file: 7,170 compounds from clustering
 filtered_tox21 = read.delim("./data/clusters.txt") #cas, cluster
+#DEBUG ONLY: change the clusters.txt file if clustering result changes; keeping everything else the same
 
 #8112 observations
 tox21_without_salts = read.delim("./data/tox21_10k_cas_smiles_without_salts.txt") %>% 
@@ -71,10 +74,10 @@ data_final = bind_rows(not_missing, data_wo_smiles)
 length(unique(data_final$cas)) #7030
 
 #create output file (cas, cluster, smiles) --> used in Python
-write_csv(data_final, "./results/cluster_and_smiles_05_10.csv")
+write_csv(data_final, "./results/cluster_and_smiles.csv")
 ```
 
-#check the characteristics of the 140 cmps with missing smiles
+## check the characteristics of the 140 compounds with missing smiles
 ```{r, eval = FALSE}
 data_no_smiles = 
   left_join(missing, aggregated_tox21_unique, by = "cas") %>% 
@@ -107,7 +110,7 @@ pharos_final = pharos_combined %>%
   rename(smiles = smiles_short)
 
 #save to .csv file
-write.csv(pharos_final, "./results/pharos_symbol_05_10.csv") 
+write.csv(pharos_final, "./results/pharos_symbol.csv") 
 #NOTE: THIS WILL BE INPUT FOR THE PYTHON PROGRAM
 ```
 
@@ -166,7 +169,7 @@ write.csv(data_distinct, "./results/inchikey/pharos_inchikey.csv")
 
 **NOTE: ** data_distinct is the final data set! It contains the original cas compound, the cluster it belongs to, its inchikey (found using RDkit smiles -> inchikey conversion), and a list of gene targets from Pharos. 
 
-# inchikey for drug repurposing hub
+## inchikey for drug repurposing hub
 ```{r}
 # data from Broad institute (this is data from Chunxu)
 broad_reformatted <- read_delim("./data/broad_reformatted.txt",
@@ -289,18 +292,19 @@ data_w_identifiers <- left_join(data_temp, hgnc_data, by="target_gene")
 write.csv(data_w_identifiers, "./results/data_w_identifiers_05_12.csv") 
 #7030 unique compounds
 
-
-test = data_w_identifiers %>% 
-  filter(cluster == 1)
-
-length(unique(test$cas)) #32 unique compounds in cluster #1
-
-length(unique(data_w_identifiers$cas))
 ```
 
 
 # Explore the data with identifiers datasheet...
 ```{r}
+
+#debug only
+test = data_w_identifiers %>% 
+  filter(cluster == 1)
+
+length(unique(test$cas)) #32 unique compounds in cluster #1
+length(unique(data_w_identifiers$cas))
+
 w = data_w_identifiers %>% 
   filter(cluster == 94)
 
