@@ -10,10 +10,6 @@ This [repository](https://github.com/ncats/drug_rep) contains the code for an an
 
 - **gene_enrichment_analysis.Rmd**: Uses results from `compound_gene_relationships.Rmd` to identify a list of *enriched* gene targets for each cluster. The Bum class is used to address the issue of multiple comparisons. 
 
-### Key folders 
-- **data**
-- **results** 
-
 
 ### Key data files 
 - **tox21_data.txt**: The original data file for the entire project; contains the bioassay activity profile data for each of the Tox21 compounds. A list of bioassays used in the Tox21 program can be found [here](https://tripod.nih.gov//tox21/pubdata/). Compound activity was measured by curve rank, a value between -9 and 9 determined by the potency, efficacy and quality of the concentration-response curve (a large positive number represents strong activation and a large negative number represents strong inhibition of the assay target). The file contains 8,971 compounds and 243 variables. 
@@ -29,4 +25,20 @@ This [repository](https://github.com/ncats/drug_rep) contains the code for an an
 - **broad_reformatted.txt**: Data pulled and organized from the Broad Institut's Drug Rep Hub. The data version used is from *3/24/2020* and can be obtained [here](https://clue.io/repurposing#download-data). Variables include `CompoundName`, `TargetGene`,	`PubchemCID`, `InKey`, `MOA`, and etc. 
 
 - **pharos_all_target_ligands-p1/2.csv**: Data from NIH's Pharos database; can be obtained [here](https://pharos.nih.gov/targets). Variables of interest include `UniProt`, `Symbol`, `Ligand Name`, `Ligand SMILES`, and etc. Note that the data file is split in two parts due to its large file size. 
+
+### Key result files
+- **clusters.txt**: Contains the results from SOM clustering (i.e., which cluster does each compound belongs to); generated from `clustering.Rmd`.
+
+- **enrichment_analysis_results.csv**: Generated from `gene_enrichment_analysis.Rmd`. Contains a list of gene targets and their approved gene names for each cluster. A column on whether the gene target is considered significantly enriched in the cluster is also included (obtained by using fisher's exact test and then keeping a overall false discovery rate (FDR) of 1% by applying a beta-uniform distribution). 
+
+- **data_w_identifers**: Generated from `gene_enrichment_analysis.Rmd`. Contains more identifiers for each compound, including CAS, pubchem id, sample name, smiles, inchikey, gene targets (symbol and approved name). 
+
+- **cluster_and_smiles**: Contains the tox21 compounds,the cluster they belongs to, and their parent smiles. This is the final dataset used in Rdkit python code to get the corresponding inchikey for the compounds.
+
+- **`inchikey`** Subfolder: The files under this subfolder are the interim result files obtained from `compound_gene_relationships.Rmd`, by mapping the Tox21 compounds and Pharos/Drug Repurposing Hub compound-target list, using *inchikey* as the primary key.  
+  - **drug_hub_inchikey.csv**: Compound and gene target pairs obtained from Broad institute's drug repurposing hub. The column headers are: cas, cluster, inchikey, short_key (i.e, the first 14 characters of the inchikey), and target_gene.
+
+  - **pharos_inchikey.csv**: Compound and gene target pairs obtained from NIH's Pharos. 
+
+  - **pharos_and_drughub.csv**: Contains unique compound-gene target pairs obtained after combining the drug repurposing and the Pharos dataset. Combined, this datafile contains *1829* unique compounds and *1629* unique target genes. This file will also be used in `gene_enrichment_analysis.Rmd`. 
 
