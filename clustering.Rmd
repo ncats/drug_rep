@@ -5,6 +5,8 @@ date: "6/10/2022"
 output: html_document
 ---
 
+> This 'clustering.Rmd' 
+
 First, load the required libraries 
 ```{r setup, message=FALSE}
 library(readxl)
@@ -27,6 +29,7 @@ library(cluster)
 
 Next, load in the data
 ```{r load_data, warning=FALSE, message=FALSE}
+
 tox21 <- read.delim("./data/tox21_data.txt")
 ```
 
@@ -52,23 +55,6 @@ final_data =
 #test <- read_csv("./results/tox21_data_cleaned.csv")
 ```
 
-
-## K-means Clustering
-```{r}
-set.seed(100)
-
-# Center and scale data
-set.up.preprocess<-preProcess(final_data, method=c("center", "scale"))
-transformed.vals<-predict(set.up.preprocess, final_data) %>% select(-1) #drop the CASRNs
-
-# Conduct a gap statistic analysis to determine optimal number of clusters 
-gap_stat<-clusGap(transformed.vals, FUN=kmeans, nstart=10, K.max=2, B=10, iter.max=50) 
-print(gap_stat, method="firstmax")
-fviz_gap_stat(gap_stat) 
-
-
-```
-
 ## SOM 
 ### Scaling 
 SOM requires that ALL numerical values be scaled; thus, scale the data and make sure that the mean of each variable is 0.
@@ -89,7 +75,6 @@ g <- somgrid(xdim = 12, ydim = 12, topo = "hexagonal", neighbourhood.fct = "gaus
 map <- som(scaled_data, grid = g, alpha = c(0.05, 0.01), radius = 1, rlen = 100)
 ```
 
-
 Plot our maps to see results.
 ```{r plot}
 #reverse color (red = more)
@@ -109,7 +94,24 @@ plot(map, type = "dist.neighbours", palette.name = colors) #mapping distance bet
 #add.cluster.boundaries(map, data.hc)
 ```
 
-#Base R + scaled data 
+
+## K-means Clustering
+```{r, eval=FALSE}
+set.seed(100)
+
+# Center and scale data
+set.up.preprocess<-preProcess(final_data, method=c("center", "scale"))
+transformed.vals<-predict(set.up.preprocess, final_data) %>% select(-1) #drop the CASRNs
+
+# Conduct a gap statistic analysis to determine optimal number of clusters 
+gap_stat<-clusGap(transformed.vals, FUN=kmeans, nstart=10, K.max=2, B=10, iter.max=50) 
+print(gap_stat, method="firstmax")
+fviz_gap_stat(gap_stat) 
+```
+
+*** 
+
+#Create heatmaps
 ```{r}
 scaled_data_w_cluster <- cbind(scaled_data, as.data.frame(map$unit.classif)) 
 cluster_assignment_scaled <- scaled_data_w_cluster %>%
@@ -129,11 +131,6 @@ heatmap(data_matrix, cexRow=0.8, cexCol = 0.25, col = color, Colv = NA, Rowv = N
 #Colv = NA, Rowv = NA
 
 #heatmap(data_matrix,Rowv = NA, Colv = NA, cexRow=1, cexCol = 0.40)   
-```
 
-
-```{r}
 #write.csv(colnames(new_data), file = "results/clusters_names.csv")
 ```
-
-
