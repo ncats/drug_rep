@@ -1,0 +1,137 @@
+---
+title: "enrichment_analysis"
+author: "Fang Liu"
+date: "6/10/2022"
+output: html_document
+---
+
+> This `enrichment_analysis.Rmd` file uses compound-gene relationships (pulled from the drug repurposing hub and Pharos) to identify a list of enriched gene targets for each cluster. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readr)
+library(ClassComparison) #for 'Bum'
+```
+
+# Load the combined pharos & drug hub data
+```{r}
+pharos_and_hub = read.csv("./results/inchikey/pharos_and_drughub.csv") %>% 
+  select(cas, cluster, target_gene)
+#note: from the 'smiles_to_inchikey.Rmd'
+
+length(unique(pharos_and_hub$target_gene)) #1629 unique genes
+length(unique(pharos_and_hub$cas)) #1829 unique compounds
+```
+
+# Overall gene frequency 
+```{r}
+gene_freq = pharos_and_hub %>% 
+  group_by(target_gene) %>% 
+  summarize(n_obs = n()) %>% 
+  arrange(-n_obs) 
+```
+
+# number of compounds (with gene target) in each cluster 
+```{r}
+#compound_cluster_freq = read.csv("./clusters_results.csv") %>% 
+#  group_by(cluster) %>% 
+#  summarize(cluster_size = n())
+
+compound_cluster_freq = pharos_and_hub %>% 
+  select(-target_gene) %>% 
+  unique() %>% 
+  group_by(cluster) %>% 
+  summarize(cluster_size = n())
+
+#test if the above is right --> YES, WORKS!
+#pharos_and_hub %>% filter(cluster == 8) %>% select(-target_gene) %>% unique() %>% count()
+
+#sum(compound_cluster_freq$cluster_size) #1829
+```
+
+# find gene frequency for each cluster
+```{r}
+#columns: cas, cluster, target_gene
+
+gene_within_cluster = 
+pharos_and_hub %>% 
+  group_by(cluster, target_gene) %>% 
+  summarize(n_genes = n())
+
+#length(unique(gene_within_cluster$target_gene)) #1629 unique gene targets
+```
+
+# create final dataset 
+```{r}
+cluster_symbol_combined = 
+  left_join(gene_within_cluster, compound_cluster_freq, by = "cluster")
+
+#add overall gene frequency data 
+data_final =
+  left_join(cluster_symbol_combined, gene_freq, by = "target_gene") %>% 
+  rename(num_compound_with_gene_in_cluster = n_genes,
+         num_compound_in_cluster = cluster_size,
+         num_compound_with_gene = n_obs) 
+
+#length(unique(data_final$target_gene))
+
+data_fin = data_final %>% 
+  mutate(TruePos = num_compound_with_gene_in_cluster,
+         FalsePos = num_compound_with_gene - TruePos,
+         FalseNeg = num_compound_in_cluster - TruePos,
+         TrueNeg = 1829 - (TruePos + FalsePos + FalseNeg),
+         TotalCmpdsTested = TruePos + FalsePos + FalseNeg + TrueNeg) %>% 
+  select(cluster, target_gene, TruePos:TotalCmpdsTested) %>% 
+  mutate(OddsRatio = (TruePos * TrueNeg)/(FalseNeg * FalsePos))
+
+#find p-values 
+p_val = apply(data_fin[, 3:6], 1, function(x) fisher.test(matrix(x, ncol=2),alternative = "greater")$p.value)
+
+#add p-value column
+data_fin$p_val <- p_val
+
+#Alternative hypothesis: true odds ratio is greater than 1 (i.e., compounds within the cluster has higher odds of having the gene than compounds outside of the cluster)
+```
+
+
+# account for multiple comparison using the "BUM" class
+```{r}
+#create "bum" object using the vector of p-values (generated from fisher's exact test)
+a <- Bum(p_val)
+
+#graph distribution of p-values
+hist(a)
+
+#use False Discovery Rate (FDR) to find the cut-ff value (set alpha = 0.01)
+cutoffSignificant(a, alpha=0.01,by='FDR') 
+
+#If p-value is less than 0.008570463, than it is significant.
+significant <- selectSignificant(a, alpha=0.01, by='FDR') 
+countSignificant(a, 0.05, by='FDR')
+countSignificant(a, 0.01, by='FDR') #number of significant p-values
+
+#add significant column to results
+data_fin$significant <- significant
+```
+
+# Add gene names
+
+[HGNC](https://www.genenames.org/download/custom/)
+
+```{r}
+#read gene names... 
+hgnc_data <- read_delim("./data/hgnc_data.txt",
+delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>% 
+  janitor::clean_names() %>% 
+  rename(target_gene = approved_symbol) %>% 
+  select(-1) %>%  #remove hgnc_ids
+  unique() 
+
+#left_join
+data_w_gene <- left_join(data_fin, hgnc_data, by="target_gene") %>% 
+  select(cluster, target_gene, approved_name, everything())
+
+#output the results
+write.csv(data_w_gene, "./results/enrichment_analysis_results.csv")
+```
