@@ -5,16 +5,14 @@ date: "6/10/2022"
 output: html_document
 ---
 
-> This 'clustering.Rmd' 
+> This 'clustering.Rmd' cleans the original Tox21 dataset `tox21_data.txt` and then uses the `kohonen` R package for SOM clustering. 
 
 First, load the required libraries 
 ```{r setup, message=FALSE}
 library(readxl)
 library(kohonen)
-library(tidyverse)
 library(factoextra)
 library(RColorBrewer)
-
 library(tidyverse)
 library(caret)
 library(rpart.plot) # for creating classification tree outputs
@@ -23,11 +21,10 @@ library(Amelia)
 library(pROC) #for calculating ROC/AUC
 library(gbm)
 library(stats)
-library(factoextra)
 library(cluster)
 ```
 
-Next, load in the data
+Next, load in the original Tox21 data.
 ```{r load_data, warning=FALSE, message=FALSE}
 
 tox21 <- read.delim("./data/tox21_data.txt")
@@ -51,11 +48,12 @@ final_data =
   rename(structure_id = data_filtered_structure_id) 
 
 #write to output
-#write.csv(final_data, file = "results/tox21_data_cleaned.csv", row.names = FALSE)
+write.csv(final_data, file = "results/tox21_data_cleaned.csv", row.names = FALSE)
 #test <- read_csv("./results/tox21_data_cleaned.csv")
 ```
 
-## SOM 
+## SOM Clustering
+
 ### Scaling 
 SOM requires that ALL numerical values be scaled; thus, scale the data and make sure that the mean of each variable is 0.
 ```{r scale_data, results='hide'}
@@ -63,7 +61,7 @@ scaled_data <- scale(final_data[, -1]) #scale all columns except the first one
 summary(scaled_data) #check if scaling was successful(mean = zero)
 ```
 
-### Create Grid 
+### Create grid & plot 
 Next, we can create and specify the grid to use for SOM.
 ```{r create_grid, results='hide'}
 set.seed(123) #ensures reproducibility 
@@ -75,7 +73,7 @@ g <- somgrid(xdim = 12, ydim = 12, topo = "hexagonal", neighbourhood.fct = "gaus
 map <- som(scaled_data, grid = g, alpha = c(0.05, 0.01), radius = 1, rlen = 100)
 ```
 
-Plot our maps to see results.
+Plot different graphs to visualize the clusters
 ```{r plot}
 #reverse color (red = more)
 colors <- function(n, alpha = 1) {
@@ -87,36 +85,38 @@ plot(map, type = "counts", palette.name = colors, heatkey = TRUE) #shows the # o
 
 plot(map, type = "mapping", pchs = 20)
 #symbols to plot when type equals "mapping", pchs = 20 means a filled circle 
-plot(map, type = "dist.neighbours", palette.name = colors) #mapping distance between nodes; U-matrix?
+plot(map, type = "dist.neighbours", palette.name = colors) #mapping distance between nodes; also known as the U-matrix
 
 #add cluster boundaries
 #data.hc <- cutree(hclust(object.distances(map, "codes")), 2)
 #add.cluster.boundaries(map, data.hc)
 ```
 
+### Output the cluster results 
+```{r}
+cluster_results <- cbind(final_data, map$unit.classif) %>% 
+  rename(cas = structure_id) %>% 
+  rename(cluster = 'map$unit.classif') %>% 
+  arrange(cluster) %>% 
+  select(cas, cluster)
 
-## K-means Clustering
-```{r, eval=FALSE}
-set.seed(100)
+str(cluster_results) #data frame
 
-# Center and scale data
-set.up.preprocess<-preProcess(final_data, method=c("center", "scale"))
-transformed.vals<-predict(set.up.preprocess, final_data) %>% select(-1) #drop the CASRNs
+write.csv(cluster_results, file = "results/cluster_results.csv", row.names = FALSE)
 
-# Conduct a gap statistic analysis to determine optimal number of clusters 
-gap_stat<-clusGap(transformed.vals, FUN=kmeans, nstart=10, K.max=2, B=10, iter.max=50) 
-print(gap_stat, method="firstmax")
-fviz_gap_stat(gap_stat) 
+
+#write.table(cluster_results, file = "results/cluster_results.txt")
+#write.table(cluster_results, file = "results/clusters.txt")
+#write.csv(cluster_results, file = "results/cluster_results.csv")
 ```
 
-*** 
-
-#Create heatmaps
+### Create heatmaps based on profile activities
 ```{r}
 scaled_data_w_cluster <- cbind(scaled_data, as.data.frame(map$unit.classif)) 
+
 cluster_assignment_scaled <- scaled_data_w_cluster %>%
   rename(cluster = 'map$unit.classif') %>% 
-  arrange(cluster)
+  arrange(cluster) #arrange rows by the clusters
 
 new_data = cluster_assignment_scaled %>% 
   filter(cluster %in% c(9)) %>% 
@@ -133,4 +133,18 @@ heatmap(data_matrix, cexRow=0.8, cexCol = 0.25, col = color, Colv = NA, Rowv = N
 #heatmap(data_matrix,Rowv = NA, Colv = NA, cexRow=1, cexCol = 0.40)   
 
 #write.csv(colnames(new_data), file = "results/clusters_names.csv")
+```
+
+## OPTIONAL: K-means Clustering
+```{r, eval=FALSE}
+set.seed(100)
+
+# Center and scale data
+set.up.preprocess<-preProcess(final_data, method=c("center", "scale"))
+transformed.vals<-predict(set.up.preprocess, final_data) %>% select(-1) #drop the CASRNs
+
+# Conduct a gap statistic analysis to determine optimal number of clusters 
+gap_stat<-clusGap(transformed.vals, FUN=kmeans, nstart=10, K.max=2, B=10, iter.max=50) 
+print(gap_stat, method="firstmax")
+fviz_gap_stat(gap_stat) 
 ```

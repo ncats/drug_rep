@@ -18,27 +18,31 @@ This [repository](https://github.com/ncats/drug_rep) contains the code for an an
 
 - **hgnc_data.txt**: Contains the HGNC ID, approved gene symbol, and approved gene name for all the gene targets. Custom downloads could be obtained [here](https://www.genenames.org/download/custom/). This dataset is used to better understand what each gene target represents (e.g., A1BG = "alpha-1-B glycoprotein", ACACA	= "acetyl-CoA carboxylase alpha").
 
-- **clusters.txt**: Contains the results from SOM clustering (i.e., which cluster does each compound belongs to); generated from `clustering.Rmd`.
-
 - **tox21_10k_cas_smiles_without_salts.txt**: Contains the [CAS](https://www.cas.org/cas-data/cas-registry) Registry Number and the parent SMILES for a selection of the Tox21 compounds.
 
 - **broad_reformatted.txt**: Data pulled and organized from the Broad Institut's Drug Rep Hub. The data version used is from *3/24/2020* and can be obtained [here](https://clue.io/repurposing#download-data). Variables include `CompoundName`, `TargetGene`,	`PubchemCID`, `InKey`, `MOA`, and etc. 
 
 - **pharos_all_target_ligands-p1/2.csv**: Data from NIH's Pharos database; can be obtained [here](https://pharos.nih.gov/targets). Variables of interest include `UniProt`, `Symbol`, `Ligand Name`, `Ligand SMILES`, and etc. Note that the data file is split in two parts due to its large file size. 
 
+- **`rdkit`** Subfolder: The files under this subfolder are obtained by running [RDKit in Python](https://github.com/ncats/drug_rep/tree/main/rdkit). Briefly, the open-source cheminformatics tool RDKit is used to find the corresponding inchikeys for the SMILES identifier. 
+  - **smi_to_inchikey.csv**: Contains the cas, cluster, smiles, and inchikey for all of the Tox21 compounds. 
+  - **pharos_to_inchikey.csv**: Contains the smiles, symbol, and inchikey for all compounds pulled from Pharos. 
+
+
 ### Key result files
 - **clusters.txt**: Contains the results from SOM clustering (i.e., which cluster does each compound belongs to); generated from `clustering.Rmd`.
 
 - **enrichment_analysis_results.csv**: Generated from `gene_enrichment_analysis.Rmd`. Contains a list of gene targets and their approved gene names for each cluster. A column on whether the gene target is considered significantly enriched in the cluster is also included (obtained by using fisher's exact test and then keeping a overall false discovery rate (FDR) of 1% by applying a beta-uniform distribution). 
 
-- **data_w_identifers**: Generated from `gene_enrichment_analysis.Rmd`. Contains more identifiers for each compound, including CAS, pubchem id, sample name, smiles, inchikey, gene targets (symbol and approved name). 
+- **data_w_identifers.csv**: Generated from `gene_enrichment_analysis.Rmd`. Contains more identifiers for each compound, including CAS, pubchem id, sample name, smiles, inchikey, gene targets (symbol and approved name). 
 
-- **cluster_and_smiles**: Contains the tox21 compounds,the cluster they belongs to, and their parent smiles. This is the final dataset used in Rdkit python code to get the corresponding inchikey for the compounds.
+- **cluster_and_smiles.csv**: Contains the tox21 compounds,the cluster they belongs to, and their parent smiles. This is the final dataset used in Rdkit python code to get the corresponding inchikey for the Tox21 compounds.
 
-- **`inchikey`** Subfolder: The files under this subfolder are the interim result files obtained from `compound_gene_relationships.Rmd`, by mapping the Tox21 compounds and Pharos/Drug Repurposing Hub compound-target list, using *inchikey* as the primary key.  
+- **pharos_and_symbols.csv**: Contains compound-gene target associations pulled from Pharos. This is the dataset used in Rdkit python code to get the corresponding inchikey for Pharos compounds. Column headers: `smiles`, `symbol`. 
+
+- **`inchikey`** Subfolder: The files under this subfolder are the interim result files obtained from `compound_gene_relationships.Rmd`, by mapping the Tox21 compounds with Pharos/Drug Repurposing Hub compound-target list, using *inchikey* as the primary key.  
   - **drug_hub_inchikey.csv**: Compound and gene target pairs obtained from Broad institute's drug repurposing hub. The column headers are: cas, cluster, inchikey, short_key (i.e, the first 14 characters of the inchikey), and target_gene.
 
   - **pharos_inchikey.csv**: Compound and gene target pairs obtained from NIH's Pharos. 
 
-  - **pharos_and_drughub.csv**: Contains unique compound-gene target pairs obtained after combining the drug repurposing and the Pharos dataset. Combined, this datafile contains *1829* unique compounds and *1629* unique target genes. This file will also be used in `gene_enrichment_analysis.Rmd`. 
-
+  - **pharos_and_drughub.csv**: Contains unique compound-gene target pairs obtained after combining the drug repurposing and the Pharos dataset. Combined, this datafile contains *1829* unique compounds and *1629* unique target genes. This is the in put data file for `gene_enrichment_analysis.Rmd`. 
