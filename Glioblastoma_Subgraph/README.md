@@ -30,9 +30,9 @@ mention NCATS GARD Knowledge graph here
 
 - **[mc_GBN_Node_Modularity_Classes.csv](https://github.com/ncats/drug_rep/blob/main/Glioblastoma_Subgraph/mc_GBN_Node_Modularity_Classes.csv)**: A list containing the nodes in mc_GBN and the modularity class each node has been assigned to.  
 
-- **mc_GBN_Node_Lists folder**: 
+- **[mc_GBN_Node_Lists folder](https://github.com/ncats/drug_rep/tree/main/Glioblastoma_Subgraph/mc_GBN_Node_Lists)**: Each file within this folder contains the list of nodes for one mc_GBN (modularity class). This node list can be used in conjunction with its corresponding edge list from [mc_GBN_Edge_Lists folder] to reconstruct the mc_GBN in a visualization tool (e.g. Gephi). Node lists are included for all mc_GBN with more than three nodes.
 
-- **mc_GBN_Edge_Lists folder**: 
+- **[mc_GBN_Edge_Lists folder](https://github.com/ncats/drug_rep/tree/main/Glioblastoma_Subgraph/mc_GBN_Edge_Lists)**: Each file within this folder contains the list of edges for one mc_GBN (modularity class). This edge list can be used in conjunction with its corresponding node list from [mc_GBN_Node_Lists folder] to reconstruct the mc_GBN in a visualization tool (e.g. Gephi). Edge lists are included for all mc_GBN with more than three nodes.
 
 - **[Modularity_Class_Centrality_Tables folder](https://github.com/ncats/drug_rep/tree/main/Glioblastoma_Subgraph/modularity_class_centrality_tables)**:
 
