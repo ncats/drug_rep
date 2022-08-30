@@ -34,7 +34,7 @@ mention NCATS GARD Knowledge graph here
 
 - **[mc_GBN_Edge_Lists folder](https://github.com/ncats/drug_rep/tree/main/Glioblastoma_Subgraph/mc_GBN_Edge_Lists)**: Each file within this folder contains the list of edges for one mc_GBN (modularity class). This edge list can be used in conjunction with its corresponding node list from [mc_GBN_Node_Lists folder](https://github.com/ncats/drug_rep/tree/main/Glioblastoma_Subgraph/mc_GBN_Node_Lists) to reconstruct the mc_GBN in a visualization tool (e.g. Gephi). Edge lists are included for all mc_GBN with more than three nodes.
 
-- **[Modularity_Class_Centrality_Tables folder](https://github.com/ncats/drug_rep/tree/main/Glioblastoma_Subgraph/modularity_class_centrality_tables)**:
+- **[Modularity_Class_Centrality_Tables folder](https://github.com/ncats/drug_rep/tree/main/Glioblastoma_Subgraph/modularity_class_centrality_tables)**: Each file within this folder contains the centrality score metrics for one mc_GBN (modularity class).
 
 
 
@@ -42,6 +42,6 @@ mention NCATS GARD Knowledge graph here
 
 - **[mc_GBN_Modularity_Class_Descriptions.pdf](https://github.com/ncats/drug_rep/blob/main/Glioblastoma_Subgraph/mc_GBN_Modularity_Class_Descriptions.pdf)**: Brief descriptions of each of the forty-one modularity classes in mc_GBN.
 
-- **Centrality_Score_Tables.pdf**: 
+- **Centrality_Score_Tables.pdf**: This file contains the degree, closeness, betweenness, eigenvector, and PageRank centrality scores for the top five nodes by each of these metrics in the GBN and each mc_GBN. Each node is given a label describing the diseases, genes, proteins, treatments, etc. that it contains. 
 
-- **[Top_Candidate_Reference_List.xlsx](https://github.com/ncats/drug_rep/blob/main/Glioblastoma_Subgraph/Top_Candidate_Reference_List.xlsx)**: 
+- **[Top_Candidate_Reference_List.xlsx](https://github.com/ncats/drug_rep/blob/main/Glioblastoma_Subgraph/Top_Candidate_Reference_List.xlsx)**: This file contains references that connect each of the ten candidates identified for drug repositioning to glioblastoma. 
