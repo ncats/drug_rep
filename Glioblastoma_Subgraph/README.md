@@ -42,6 +42,6 @@ mention NCATS GARD Knowledge graph here
 
 - **[mc_GBPN_Modularity_Class_Descriptions.pdf](https://github.com/ncats/drug_rep/blob/main/Glioblastoma_Subgraph/mc_GBPN_Modularity_Class_Descriptions.pdf)**: Brief descriptions of each of the forty-one modularity classes in mc_GBPN.
 
-- **Centrality_Score_Tables.pdf**: This file contains the degree, closeness, betweenness, eigenvector, and PageRank centrality scores for the top five nodes by each of these metrics in the GBPN and each mc_GBPN. Each node is given a label describing the diseases, genes, proteins, treatments, etc. that it contains. 
+- **[Centrality_Score_Tables.pdf](https://github.com/ncats/drug_rep/blob/main/Glioblastoma_Subgraph/Centrality_Score_Tables.pdf)**: This file contains the degree, closeness, betweenness, eigenvector, and PageRank centrality scores for the top five nodes by each of these metrics in the GBPN and each mc_GBPN. Each node is given a label describing the diseases, genes, proteins, treatments, etc. that it contains. 
 
 - **[Top_Candidate_Reference_List.xlsx](https://github.com/ncats/drug_rep/blob/main/Glioblastoma_Subgraph/Top_Candidate_Reference_List.xlsx)**: This file contains references that connect each of the ten candidates identified for drug repositioning to glioblastoma. 
