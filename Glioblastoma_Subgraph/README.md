@@ -1,4 +1,4 @@
-<h2 align="center">Network Analysis-Based Drug Repurposing for Glioblastoma</h2>
+<h2 align="center">Integrative Rare Disease Biomedical Profile based Network Supporting  Drug Repurposing, a case study of Glioblastoma</h2>
 
 Glioblastoma (GBM) is the most aggressive and common malignant primary brain tumor, however treatment remains a significant challenge. This [folder](https://github.com/ncats/drug_rep/tree/main/Glioblastoma_Subgraph) contains information related to a study that aims to identify drug repurposing candidates for GBM by developing an integrative rare disease profile network including heterogeneous types of biomedical data. 
 
