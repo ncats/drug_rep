@@ -1,10 +1,9 @@
 <h2 align="center">Network Analysis-Based Drug Repurposing for Glioblastoma</h2>
 
-This [folder](https://github.com/ncats/drug_rep/tree/main/Glioblastoma_Subgraph) contains information related to the development and analysis of a glioblastoma-based network of rare disease data for the purpose of identifying potential candidates for drug repositioning to treat glioblastoma. 
+Glioblastoma (GBM) is the most aggressive and common malignant primary brain tumor, however treatment remains a significant challenge. This [folder](https://github.com/ncats/drug_rep/tree/main/Glioblastoma_Subgraph) contains information related to a study that aims to identify drug repurposing candidates for GBM by developing an integrative rare disease profile network including heterogeneous types of biomedical data. 
 
-<!---
-mention NCATS GARD Knowledge graph here
--->
+We developed a Glioblastoma-based Biomedical Profile Network (GBPN) by extracting and integrating biomedical information pertinent to GBM-related diseases from the NCATS GARD Knowledge Graph (NGKG). To generate focused subgraphs, we further clustered the GBPN based on modularity classes which resulted in multiple subgraphs, named mc_GBPN. We identified high-influence nodes by performing network analysis over the mc_GBPN and manually validated those nodes that could be potential drug repositioning candidates for GBM.
+
 
 ### Lab Notebook 
 
