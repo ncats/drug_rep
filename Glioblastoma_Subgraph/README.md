@@ -2,7 +2,7 @@
 
 Glioblastoma (GBM) is the most aggressive and common malignant primary brain tumor, however treatment remains a significant challenge. This [folder](https://github.com/ncats/drug_rep/tree/main/Glioblastoma_Subgraph) contains information related to a study that aims to identify drug repurposing candidates for GBM by developing an integrative rare disease profile network including heterogeneous types of biomedical data. 
 
-We developed a Glioblastoma-based Biomedical Profile Network (GBPN) by extracting and integrating biomedical information pertinent to GBM-related diseases from the NCATS GARD Knowledge Graph (NGKG). To generate focused subgraphs, we further clustered the GBPN based on modularity classes which resulted in multiple subgraphs, named mc_GBPN. We identified high-influence nodes by performing network analysis over the mc_GBPN and manually validated those nodes that could be potential drug repositioning candidates for GBM.
+We developed a Glioblastoma-based Biomedical Profile Network (GBPN) by extracting and integrating biomedical information pertinent to GBM-related diseases from the [NCATS GARD Knowledge Graph (NGKG)](https://pubmed.ncbi.nlm.nih.gov/33183351/). To generate focused subgraphs, we further clustered the GBPN based on modularity classes which resulted in multiple subgraphs, named mc_GBPN. We identified high-influence nodes by performing network analysis over the mc_GBPN and manually validated those nodes that could be potential drug repositioning candidates for GBM.
 
 
 ### Lab Notebook 
