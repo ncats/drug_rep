@@ -1,0 +1,131 @@
+---
+title: "enriched pathway analysis"
+author: "Chloe Chen"
+date: "12/16/2022"
+output: html_document
+---
+
+> This `enriched_pathway.Rmd` file uses compound-gene relationships (pulled from BioPlanet) to identify a list of enriched pathway targets for each cluster. The code was modified from gene_enrichment_analysis.Rmd by Fang Liu. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readr)
+library(ClassComparison) #for 'Bum'
+```
+
+# Load pathway data
+```{r}
+pathway_data = read.csv("./data/pathway.csv")
+```
+# Add cluster information onto pathway data
+```{r}
+# read gene enrichment analysis results
+gene_data = read.csv("./results/enrichment_analysis_results_7_20.csv") %>%
+  filter(significant == TRUE) %>% #filter out insignificant genes
+  select(cluster, target_gene) %>%
+  group_by(cluster)
+colnames(gene_data)[2] = "GENE_SYMBOL"
+
+# add cluster information on pathway data
+pathway_data_cluster = merge(pathway_data, gene_data, by="GENE_SYMBOL", all.x=TRUE)
+pathway_data_cluster = na.omit(pathway_data_cluster)
+
+
+length(unique(pathway_data_cluster$PATHWAY_NAME)) #1299 unique pathways
+length(unique(pathway_data_cluster$GENE_SYMBOL)) #682 unique genes
+
+```
+
+# Overall pathway frequency 
+```{r}
+pathway_freq = pathway_data_cluster %>% 
+  group_by(PATHWAY_NAME) %>% 
+  summarize(n_obs = n()) %>% 
+  arrange(-n_obs) 
+```
+
+# number of genes in each cluster 
+```{r}
+gene_cluster_freq = gene_data %>%
+  group_by(cluster) %>% 
+  summarize(cluster_size = n())
+
+```
+
+# find pathway frequency for each cluster
+```{r}
+
+pathway_within_cluster = 
+pathway_data_cluster %>% 
+  group_by(cluster, PATHWAY_NAME) %>% 
+  summarize(n_pathways = n())
+
+length(unique(pathway_within_cluster$PATHWAY_NAME)) #1299 unique pathway targets
+```
+
+# create final dataset 
+```{r}
+cluster_symbol_combined = 
+  left_join(pathway_within_cluster, gene_cluster_freq, by = "cluster")
+
+#add overall gene frequency data 
+data_final =
+  left_join(cluster_symbol_combined, pathway_freq, by = "PATHWAY_NAME") %>% 
+  rename(num_gene_with_pathway_in_cluster = n_pathways,
+         num_gene_in_cluster = cluster_size,
+         num_gene_with_pathway = n_obs) 
+
+#length(unique(data_final$target_gene))
+
+data_fin = data_final %>% 
+  mutate(TruePos = num_gene_with_pathway_in_cluster,
+         FalsePos = num_gene_with_pathway - TruePos,
+         FalseNeg = num_gene_in_cluster - TruePos,
+         TrueNeg = 1299 - (TruePos + FalsePos + FalseNeg),
+         TotalCmpdsTested = TruePos + FalsePos + FalseNeg + TrueNeg) %>% 
+  select(cluster, PATHWAY_NAME, TruePos:TotalCmpdsTested) %>% 
+  mutate(OddsRatio = (TruePos * TrueNeg)/(FalseNeg * FalsePos))
+
+data_fin = na.omit(data_fin)
+
+#find p-values 
+p_val = apply(data_fin[, 3:6], 1, function(x) fisher.test(matrix(x, ncol=2),alternative = "greater")$p.value)
+
+#add p-value column
+data_fin$p_val <- p_val
+```
+
+
+# account for multiple comparison using the "BUM" class
+```{r}
+#create "bum" object using the vector of p-values (generated from fisher's exact test)
+a <- Bum(p_val)
+
+#graph distribution of p-values
+hist(a)
+
+
+# 0.0003966139
+#use False Discovery Rate (FDR) to find the cut-ff value (set alpha = 0.01)
+cutoffSignificant(a, alpha=0.0005,by='FDR') 
+
+significant <- selectSignificant(a, alpha=0.0005, by='FDR') 
+countSignificant(a, 0.0005, by='FDR') #number of significant p-values
+
+#add significant column to results
+data_fin$significant <- significant
+```
+
+```{r}
+#output the results
+write.csv(data_fin, "./results/pathway_enrichment_results.csv")
+```
+
+```{r}
+all_enriched_pathways = data_fin %>%
+  filter(significant == TRUE) %>%
+  select(cluster, PATHWAY_NAME, p_val) %>%
+  group_by(cluster) %>%
+  arrange(cluster, p_val)
+```

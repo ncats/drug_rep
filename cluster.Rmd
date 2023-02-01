@@ -1,0 +1,226 @@
+---
+title: "clustering"
+author: "Chloe Chen"
+date: "2022-06-5"
+output: html_document
+---
+> This is my code for k-means clustering.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)  # data manipulation
+library(cluster)    # clustering algorithms
+library(factoextra)
+library(ggplot2) # clustering algorithms & visualization
+```
+
+## K-means clustering
+
+```{r}
+# read in the data
+df = read.csv("results/tox21_data_cleaned.csv")
+df= df[,-c(1)]
+```
+
+```{r}
+# distance for K-means
+eucli_dist = get_dist(df)
+```
+
+```{r}
+# perform k-means clustering on the data
+k2 = kmeans(df, centers = 2, nstart = 25)
+k3 = kmeans(df, centers = 3, nstart = 25)
+k4 = kmeans(df, centers = 4, nstart = 25)
+k5 = kmeans(df, centers = 5, nstart = 25)
+
+# plots to compare
+p1 = fviz_cluster(k2, geom = "point", data = df) + ggtitle("k = 2")
+p2 = fviz_cluster(k3, geom = "point",  data = df) + ggtitle("k = 3")
+p3 = fviz_cluster(k4, geom = "point",  data = df) + ggtitle("k = 4")
+p4 = fviz_cluster(k5, geom = "point",  data = df) + ggtitle("k = 5")
+
+library(gridExtra)
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+```
+```{r}
+# evaluate clusters
+p5 = fviz_nbclust(df, kmeans, method = "wss")
+p6 = fviz_nbclust(df, kmeans, method = "silhouette")
+grid.arrange(p5, p6, nrow = 1)
+```
+
+```{r}
+k140 = kmeans(df, centers = 140, nstart = 25)
+k150 = kmeans(df, centers = 150, nstart = 25)
+p140 = fviz_cluster(k140, geom = "point",  data = df) + ggtitle("k = 140")
+p150 = fviz_cluster(k150, geom = "point",  data = df) + ggtitle("k = 150")
+
+grid.arrange(p140, p150, nrow = 2)
+```
+
+## SOM
+
+```{r}
+library(kohonen)
+library(tempR)
+data_matrix <- as.matrix(scale(df))
+n <- 12
+som_grid <- somgrid(xdim = n, ydim=n, topo="hexagonal")
+som_model <- som(data_matrix, 
+    grid=som_grid, 
+    rlen=500, 
+    alpha=c(0.05,0.01), 
+    keep.data = TRUE )
+```
+
+```{r}
+plot(som_model, type="changes")
+```
+
+```{r}
+plot(som_model, type="count", main="Node Counts")
+```
+
+```{r}
+som_cluster <- cutree(hclust(dist(unlist(som_model$codes))), 100)
+plot(som_model, type="mapping", bgcol = som_cluster, main = "Clusters")
+add.cluster.boundaries(som_model, som_cluster)
+```
+
+```{r}
+cluster_assignment <- som_cluster[som_model$unit.classif]
+h <-hist(cluster_assignment)
+```
+
+
+Kmeans to SOM Heat Map
+```{r}
+library(RColorBrewer)
+
+kmeans_clusters = read.csv("results/kmeans_data.csv")
+kmeans_clusters = kmeans_clusters$x
+som_results = read.csv("./results/som_clusters.csv")
+som_clusters = som_results$x
+mapping = cbind(som_clusters, kmeans_clusters)
+m = matrix(0, nrow = 4, ncol = 144)
+for (i in 1:7170) {
+  row = kmeans_clusters[i]
+  col = som_clusters[i]
+  m[row, col] = m[row, col] + 1
+}
+
+
+heatmap(m, scale="column", col= colorRampPalette(brewer.pal(8, "Blues"))(25))
+```
+
+SOM bias map
+```{r}
+bias = matrix(0, nrow=2, ncol=144)
+rownames(bias) = c("assignment", "bias")
+for (i in 1:144){
+  vals = m[, i]
+  a = which.max(vals)
+  second = sort(vals)[3]
+  if (second == 0){
+    b = max(vals)
+  }
+  else{
+    b = max(vals) / sort(vals)[3]
+  }
+  bias[1, i] = a
+  bias[2, i] = b
+}
+bias = cbind(bias[, 1:31], bias[, 34:144])
+print(range(bias[2,]))
+```
+
+```{r}
+library(gplots)
+
+bias = as.tibble(t(bias))
+colnames(bias) = c("assignment", "bias")
+h1d = filter(bias, assignment == 1)
+d = cbind(h1d$bias, h1d$bias)
+heatmap.2(d, trace="n", Colv = NA, 
+          dendrogram = "row", labCol = "", labRow = h1d$bias, cexRow = 0.75, col= colorRampPalette(brewer.pal(8, "Blues"))(25))
+```
+```{r}
+h2d = filter(bias, assignment == 2)
+d2 = cbind(h2d$bias, h2d$bias)
+heatmap.2(d2, trace="n", Colv = NA, 
+          dendrogram = "row", labCol = "", labRow = h2d$bias, cexRow = 0.75, col= colorRampPalette(brewer.pal(8, "Blues"))(25))
+```
+
+```{r}
+h3d = filter(bias, assignment == 3)
+d3 = cbind(h3d$bias, h3d$bias)
+heatmap.2(d3, trace="n", Colv = NA, 
+          dendrogram = "row", labCol = "", labRow = h3d$bias, cexRow = 0.75, col= colorRampPalette(brewer.pal(8, "Blues"))(25))
+```
+
+```{r}
+h4d = filter(bias, assignment == 4)
+d4 = cbind(h4d$bias, h4d$bias)
+heatmap.2(d4, trace="n", Colv = NA, 
+          dendrogram = "row", labCol = "", labRow = h4d$bias, cexRow = 0.75, col= colorRampPalette(brewer.pal(8, "Blues"))(25))
+```
+
+# correlation graphs
+```{r}
+# taken from Amy's data cleaning code
+tox21 <- read.delim("./data/tox21_data.txt")
+
+new_df <- tox21
+new_df[new_df == 'x'] <- NA  
+data_filtered <- new_df[complete.cases(new_df),] 
+
+#all columns are character, need to convert all columns to numerical
+data_numerical <- as.data.frame(sapply(data_filtered[-c(1,2)], as.numeric)) 
+
+#rejoin the CAS ID and bioassay data into a data frame 
+final_data =
+  data.frame(data_filtered$Structure.ID, data_numerical) %>% 
+  janitor::clean_names() %>% 
+  rename(structure_id = data_filtered_structure_id)
+
+scaled_data <- scale(final_data[, -1])
+
+scaled_data_w_cluster <- cbind(as.tibble(scaled_data), som_clusters)
+```
+
+```{r}
+centroids = matrix(0, 144, 241)
+size = matrix(0, 144, 1)
+rownames(centroids) = c(1:144)
+for (i in 1:144){
+  data = filter(scaled_data_w_cluster, som_clusters == i)
+  data = data[,1:241]
+  c = colMeans(data)
+  centroids[i,] = c
+  size[i] = nrow(data)
+}
+centroids = rbind(centroids[1:31,], centroids[34:144,])
+write.csv(centroids, file = "results/centroids.csv")
+```
+
+```{r}
+library("ggplot2")
+library("ggdendro")
+pdf("52-94.pdf")
+hc = hclust(dist(centroids))
+hcd = as.dendrogram(hc)
+plot(hcd, xlim=c(100, 120))
+dev.off()
+```
+
+```{r}
+library(GGally)
+
+cluster_names = c(paste("c", 1:144))
+cluster_names = c(cluster_names[1:31], cluster_names[34:144])
+cent = t(centroids)
+colnames(cent) = c(cluster_names)
+ggcorr(cent[,103:116], method = c("pairwise", "pearson"), nbreaks=5) 
+
+```
