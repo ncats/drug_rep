@@ -1,0 +1,126 @@
+---
+title: "GBM proteomics re-analysis"
+author: "s.s"
+date: "2023-06-05"
+output: html_document
+---
+### environment loading
+```{r environment loading}
+## loading packages
+library(ggplot2)
+library(ggfortify)
+
+## set read and write directory
+inpath <- '.../proteomics/'
+outpath <- '.../proteomics/'
+
+```
+### data overview cleaning
+```{r}
+#read proteomics data from PMID_31331834
+dt.834 <- read.csv(paste(inpath, 'PMID_31331834_v1.csv', sep = ''))
+# head(dt.834)
+# View(dt.834)
+# length(dt.834$GeneName)
+# length(unique(dt.834$GeneName))
+# # [1] 8994
+# dt.834$GeneName[duplicated(dt.834$GeneName)]
+
+#read proteomics data from PPMID_32919304
+dt.304 <- read.csv(paste(inpath, 'PMID_32919304_v1.csv', sep = ''))
+# View(dt.304)
+# length(dt.304$GeneName)
+length(unique(dt.304$GeneName))
+# [1] 2458
+
+```
+
+### calculation of adusted p-value (B-H & bonferroni)
+```{r calculation of adusted p-value}
+####  BH adjusted p-value for PMID_31331834
+dt.834$BH_p_value <- p.adjust(dt.834$p_value, method = 'BH')
+
+## check distribution of adjusted p values
+summary(dt.834$BH_p_value)
+hist(-log10(dt.834$p_value), breaks = 100)
+hist(-log10(dt.834$BH_p_value), breaks = 100)
+nrow(dt.834[which(dt.834$BH_p_value < 0.01),])
+# [1] 6983
+nrow(dt.834[which(dt.834$BH_p_value < 0.01 &  abs(log2(dt.834$FC)) > 1),])
+# [1] 5835
+
+#### bonferroni adjusted p-value for PMID_31331834
+dt.834$bfn_p_value <- p.adjust(dt.834$p_value, method = 'bonferroni')
+hist(-log10(dt.834$bfn_p_value), breaks = 100)
+nrow(dt.834[which(dt.834$bfn_p_value < 0.01),])
+# [1] 550
+nrow(dt.834[which(dt.834$bfn_p_value < 0.01 &  abs(log2(dt.834$FC)) > 1),])
+# 544
+nrow(dt.834[which(dt.834$bfn_p_value < 0.05 &  abs(log2(dt.834$FC)) > 1),])
+# [1] 1199
+
+
+####  BH and bonferroni adjusted p-value for PPMID_32919304
+dt.304$BH_p_value <- p.adjust(dt.304$p_value, method = 'BH')
+dt.304$bfn_p_value <- p.adjust(dt.304$p_value, method = 'bonferroni')
+hist(-log10(dt.304$BH_p_value), breaks = 100)
+hist(-log10(dt.304$bfn_p_value), breaks = 100)
+hist(-log10(dt.304$p_value), breaks = 100)
+
+### check significant proteins under different thresholds
+nrow(dt.304[which(dt.304$BH_p_value < 0.01 &  abs(log2(dt.304$FC)) > 1),])
+# [1] 62
+nrow(dt.304[which(dt.304$BH_p_value < 0.05 &  abs(log2(dt.304$FC)) > 1),])
+# [1] 128
+nrow(dt.304[which(dt.304$bfn_p_value < 0.01 &  abs(log2(dt.304$FC)) > 1),])
+# [1] 1
+nrow(dt.304[which(dt.304$p_value < 0.01 &  abs(log2(dt.304$FC)) > 0.6),])
+# [1] 599
+nrow(dt.304[which(dt.304$p_value < 0.05 &  abs(log2(dt.304$FC)) > 0.55),])
+# [1] 1109
+
+
+```
+
+### duplicate sig proteins in both projects
+```{r duplicate sig proteins}
+sigGene_834 <- dt.834[which(dt.834$bfn_p_value < 0.01 &  abs(log2(dt.834$FC)) > 1),"GeneName"]
+sigGene_304 <- dt.304[which(dt.304$p_value < 0.01 &  abs(log2(dt.304$FC)) > 0.6), "GeneName"]
+length(intersect(sigGene_834, sigGene_304))
+# [1] 56
+
+sigGene_834_ <- dt.834[which(dt.834$bfn_p_value < 0.05 &  abs(log2(dt.834$FC)) > 1),"GeneName"]
+sigGene_304_ <- dt.304[which(dt.304$p_value < 0.05 &  abs(log2(dt.304$FC)) > 0.55), "GeneName"]
+length(intersect(sigGene_834_, sigGene_304_))
+# [1] 215
+
+### save results
+write.csv(dt.834, file = paste(outpath,"PMID_31331834.final.csv", sep = ""))
+write.csv(dt.304, file = paste(outpath,"PMID_32919304.final.csv", sep = ""))
+
+```
+
+
+### PCA analysis for PMID_31331834
+```{r PCA analysis}
+# dt <- read.csv(paste(inpath, 'PMID_31331834_v1.csv', sep = ''))
+dt <- read.csv(paste(outpath,"PMID_31331834.final.csv", sep = ""), header = T)
+rownames(dt) <- dt$GeneName
+dt <- dt [,c("GBM_Rep1", "GBM_Rep2","GBM_Rep3", "Control_Rep1", "Control_Rep2", "Control_Rep.3")]
+dt.1 <-  t(dt)
+
+pca_res <- prcomp(dt.1, scale. = TRUE)
+png(file = paste(outpath,'PCA_PMID_31331834.png', sep = ""),width = 10, height =8, units = "in", res = 300)
+pdf(file = paste(outpath,'PCA_PMID_31331834.pdf', sep = ""),width = 10, height =8)
+autoplot(pca_res, label =T)
+dev.off()
+
+```
+
+
+
+
+
+
+
+

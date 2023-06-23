@@ -1,0 +1,197 @@
+---
+title: "RNAseq+proteomics"
+author: "s.s"
+date: "2023-06-05"
+output: html_document
+---
+### environment loading
+```{r environment loading}
+## loading packages
+
+## read and write path
+rna.path = '.../GBM/mRNA/'
+prt.path = '.../GBM/proteomics/'
+outpath = '.../GBM/RNA+protein/'
+
+```
+
+### merge expression matrixes of mRNA-seq and proteomics
+```{r Merge data}
+## read data
+prt <- read.csv(paste(prt.path, "PMID_31331834.final.csv", sep = ""), row.names = 1)
+rna <- read.table(paste(rna.path, "GBM_control_results.txt", sep = ""))
+
+head(rna)
+head(prt)
+
+## merge data sets
+row.names(prt) <- prt$GeneName
+dt.exp <- merge(rna, prt, by='row.names')
+
+## remove NA rows
+dt.exp <- !is.na(dt.exp)
+
+# save file
+write.table(dt.exp, file = paste(outpath, "rna+protein.txt", sep = ""))
+
+```
+
+
+### quadrant plot
+```{r quadrant plot}
+# read data
+dt <- read.table( file = paste(outpath, "rna+protein.txt", sep = ""), header = T, row.names = 1)
+
+rownames(dt) <- dt$Row.names
+
+dt_1 <- dt[,c("log2FoldChange", "padj", "FC", "bfn_p_value" )]
+colnames(dt_1) <- c("RNA_log2FC", "RNA_padj", "pro_FC", "pro_padj")
+dt <- dt_1
+dt$pro_log2FC <- log2(dt$pro_FC)
+
+## set color palette for plotting
+dt$palette <- 'gray70'  # set non-significant color 
+
+# set DE gene as red. Cut-off: p < 0.05, fold change >2 | < 0.5
+ for (i in 1:length(dt$palette)) {
+    if (dt$pro_padj[i] < 0.05 & dt$RNA_padj[i] < 0.05 & abs(as.numeric(dt$RNA_log2FC[i])) > 1 & abs(as.numeric(dt$pro_log2FC[i])) > 1)
+  {dt$palette[i] <- 'red'  }
+ }
+
+# plot genes color by color
+gray.points <- dt[which(dt$palette == 'gray70'),]
+red.points <- dt[which(dt$palette == 'red'),]
+
+pdf(file = paste(outpath,'quadrant.pdf', sep = ""),width = 10, height =8) # or
+png(file = paste(outpath,'quadrant.png', sep = ""),width = 10, height =8, units = "in", res = 300)
+par(mar=c(8, 8, 4, 4))
+plot(gray.points$pro_log2FC~gray.points$RNA_log2FC,
+     ylim=c(-12,15),
+     xlim=c(-7,7),
+     col=gray.points$palette,
+     pch=16,
+     cex=1.5,
+     xlab='log2 Fold Change of transcripts',
+     ylab = 'log2 Fold Change of proteins',
+     cex.axis = 2,
+     cex.lab = 2,
+)
+# add red points
+points(red.points$pro_log2FC~red.points$RNA_log2FC,
+       col=red.points$palette,
+       pch=16,
+       cex=1.5
+) 
+
+# add cut-off lines
+abline(h = 1,  col = "gray10", untf = FALSE, lty=2, lwd =3)
+abline(h = -1,  col = "gray10", untf = FALSE, lty=2, lwd =3)
+abline(v = 1,  col = "gray10", untf = FALSE, lty=2, lwd =3)
+abline(v = -1,  col = "gray10", untf = FALSE, lty=2, lwd =3)
+dev.off()
+
+## save the results
+write.table(dt, file = paste(outpath, "quadrantData.txt", sep = "")) # or
+write.csv(dt, file = paste(outpath, "quadrantData.csv", sep = ""))
+
+```
+
+
+
+### matching candidate with FDA approved drugs
+```{r}
+library(stringr)
+## read candidates
+
+cadicates <- readxl::read_excel("H:/Documents/Repository/R/GBM/iLINCS/candidatesFiltering.xlsx", sheet = 1)
+candidates <- cadicates$Perturbagen[cadicates$isDrug == "Yes"] ## remove the questionable row
+## read approved drug list
+
+drug.list <- read.csv("H:/Documents/Repository/R/GBM/iLINCS/drugsatfda20230606/products.txt", sep = "\t",
+                         header = T
+                        # nrows = 156,
+                        # skip = 152
+                        )
+### overview of the sources 
+
+list.unique <- unique(candidates)
+
+# 48 unique candidate drugs, including TMZ
+#  [1] "Dasatinib"                "Sirolimus"                "Cabozantinib"            
+#  [4] "temsirolimus"             "Etoposide"                "Axitinib"                
+#  [7] "Ciclopirox"               "mitomycin"                "Cytarabine"              
+# [10] "Prochlorperazine"         "Tacrolimus"               "Gemcitabine"             
+# [13] "DOCETAXEL"                "Simvastatin"              "Dacarbazine"             
+# [16] "Cyclosporine"             "Topotecan"                "Clofarabine"             
+# [19] "Thalidomide"              "Tigecycline"              "temozolomide"            
+# [22] "Tretinoin"                "Gefitinib"                "Albendazole"             
+# [25] "Podofilox"                "Spironolactone"           "Triamterene"             
+# [28] "Gatifloxacin"             "Azacitidine"              "Acetazolamide"           
+# [31] "Decitabine"               "Lenalidomide"             "Palbociclib"             
+# [34] "Clozapine"                "trifluridine"             "dacarbazine"             
+# [37] "metronidazole"            "methotrexate"             "cimetidine"              
+# [40] "dasatinib"                "bortezomib"               "gemcitabine"             
+# [43] "Romidepsin"               "sirolimus"                "cisplatin"               
+# [46] "topotecan"                "paclitaxel"               "Epirubicin hydrochloride"
+
+
+```
+
+
+### Venn diagram of the candidates
+```{r}
+candidates <- read.csv("H:/Documents/Repository/R/GBM/iLINCS/candidates.csv")
+
+length(unique(candidates$Perturbagen))
+# [1] 133
+table(candidates$Source)
+ # CancerTheraputics ChemicalPertubagen    ConnectivityMap         DrugMatrix 
+ #                37                 15                  5                164 
+ #  Pharmacogenomics   TargetProteomics 
+ #               126                  3 
+
+### Venn plot
+ library(VennDiagram) 
+
+CancerTheraputics <- candidates$Perturbagen[candidates$Source == "CancerTheraputics"]
+ChemicalPertubagen <- candidates$Perturbagen[candidates$Source == "ChemicalPertubagen"]
+TargetProteomics <- candidates$Perturbagen[candidates$Source == "TargetProteomics"]
+ConnectivityMap <- candidates$Perturbagen[candidates$Source == "ConnectivityMap"]
+DrugMatrix <- candidates$Perturbagen[candidates$Source == "DrugMatrix"]
+Pharmacogenomics <- candidates$Perturbagen[candidates$Source == "Pharmacogenomics"]
+
+venn.diagram(
+  x = list(CancerTheraputics, ChemicalPertubagen, TargetProteomics, ConnectivityMap, DrugMatrix, Pharmacogenomics),
+  category.names = c("CancerTheraputics", "ChemicalPertubagen", "TargetProteomics", "ConnectivityMap", "DrugMatrix", "Pharmacogenomics"),
+  filename = "H:/Documents/Repository/R/GBM/iLINCS/_venn_diagramm.png",
+  output=T
+)
+
+venn.diagram(
+  x = list(CancerTheraputics, ChemicalPertubagen,  ConnectivityMap, DrugMatrix, Pharmacogenomics),
+  category.names = c("CancerTheraputics", "ChemicalPertubagen", "ConnectivityMap", "DrugMatrix", "Pharmacogenomics"),
+  filename = "H:/Documents/Repository/R/GBM/iLINCS/_venn_diagramm.png",
+  output=T
+)
+
+
+
+library(venn)
+venn(x = list(CancerTheraputics=CancerTheraputics, ChemicalPertubagen=ChemicalPertubagen, TargetProteomics=TargetProteomics, ConnectivityMap=ConnectivityMap, DrugMatrix=DrugMatrix, Pharmacogenomics=Pharmacogenomics), ilabels=TRUE, zcolor = "style", counts = TRUE)
+
+venn(x = list(CancerTheraputics=CancerTheraputics, ChemicalPertubagen=ChemicalPertubagen,  ConnectivityMap=ConnectivityMap, DrugMatrix=DrugMatrix, Pharmacogenomics=Pharmacogenomics), ilabels=TRUE, zcolor = "style", counts = TRUE)
+venn(x = list(CancerTheraputics=CancerTheraputics, ChemicalPertubagen=ChemicalPertubagen,  DrugMatrix=DrugMatrix, Pharmacogenomics=Pharmacogenomics), ilabels=TRUE, zcolor = "style", counts = T, ggplot = T)
+venn(3, counts = 1:8)
+
+
+
+### sort by the duplicate numbers
+length(unique(candidates$SignatureId)) # 350
+sort(unique())
+unique(sort(candidates,))
+df <- candidates[order(candidates$Count,decreasing=TRUE),]
+
+unique(tolower(df))
+
+```
+

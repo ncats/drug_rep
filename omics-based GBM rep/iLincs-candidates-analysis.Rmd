@@ -1,0 +1,85 @@
+---
+title: "iLincs candidates review"
+author: "s.s"
+date: "2023-06-05"
+output: html_document
+---
+### environment loading
+```{r environment loading}
+## loading packages
+
+## read and write path
+rna.path = '.../GBM/mRNA/'
+prt.path = '.../GBM/proteomics/'
+outpath = '.../GBM/RNA+protein/'
+
+```
+
+
+
+### matching candidate with FDA approved drugs
+```{r}
+library(stringr)
+## read chemical/drug candidates collected from iLincs
+cadicates <- readxl::read_excel(".../candidatesFiltering.xlsx", sheet = 1)
+candidates <- cadicates$Perturbagen[cadicates$isDrug == "Yes"] ## remove the questionable row
+
+## read FDA approved drug list
+drug.list <- read.csv(".../products.txt", sep = "\t",
+                         header = T
+                        # nrows = 156,
+                        # skip = 152
+                        )
+
+
+
+```
+
+
+### Venn diagram of the candidates from difference libraries
+```{r Venn diagram}
+candidates <- read.csv(".../iLINCS/candidates.csv")
+
+length(unique(candidates$Perturbagen))
+table(candidates$Source)
+ # CancerTheraputics ChemicalPertubagen    ConnectivityMap         DrugMatrix 
+ #                37                 15                  5                164 
+ #  Pharmacogenomics   TargetProteomics 
+ #               126                  3 
+
+### Venn plot
+ library(VennDiagram) 
+
+CancerTheraputics <- candidates$Perturbagen[candidates$Source == "CancerTheraputics"]
+ChemicalPertubagen <- candidates$Perturbagen[candidates$Source == "ChemicalPertubagen"]
+TargetProteomics <- candidates$Perturbagen[candidates$Source == "TargetProteomics"]
+ConnectivityMap <- candidates$Perturbagen[candidates$Source == "ConnectivityMap"]
+DrugMatrix <- candidates$Perturbagen[candidates$Source == "DrugMatrix"]
+Pharmacogenomics <- candidates$Perturbagen[candidates$Source == "Pharmacogenomics"]
+
+venn.diagram(
+  x = list(CancerTheraputics, ChemicalPertubagen, TargetProteomics, ConnectivityMap, DrugMatrix, Pharmacogenomics),
+  category.names = c("CancerTheraputics", "ChemicalPertubagen", "TargetProteomics", "ConnectivityMap", "DrugMatrix", "Pharmacogenomics"),
+  filename = "H:/Documents/Repository/R/GBM/iLINCS/_venn_diagramm.png",
+  output=T
+)
+
+venn.diagram(
+  x = list(CancerTheraputics, ChemicalPertubagen,  ConnectivityMap, DrugMatrix, Pharmacogenomics),
+  category.names = c("CancerTheraputics", "ChemicalPertubagen", "ConnectivityMap", "DrugMatrix", "Pharmacogenomics"),
+  filename = "H:/Documents/Repository/R/GBM/iLINCS/_venn_diagramm.png",
+  output=T
+)
+
+
+
+library(venn)
+venn(x = list(CancerTheraputics=CancerTheraputics, ChemicalPertubagen=ChemicalPertubagen, TargetProteomics=TargetProteomics, ConnectivityMap=ConnectivityMap, DrugMatrix=DrugMatrix, Pharmacogenomics=Pharmacogenomics), ilabels=TRUE, zcolor = "style", counts = TRUE)
+
+venn(x = list(CancerTheraputics=CancerTheraputics, ChemicalPertubagen=ChemicalPertubagen,  ConnectivityMap=ConnectivityMap, DrugMatrix=DrugMatrix, Pharmacogenomics=Pharmacogenomics), ilabels=TRUE, zcolor = "style", counts = TRUE)
+venn(x = list(CancerTheraputics=CancerTheraputics, ChemicalPertubagen=ChemicalPertubagen,  DrugMatrix=DrugMatrix, Pharmacogenomics=Pharmacogenomics), ilabels=TRUE, zcolor = "style", counts = T, ggplot = T)
+venn(3, counts = 1:8)
+
+
+```
+

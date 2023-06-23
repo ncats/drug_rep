@@ -1,0 +1,283 @@
+---
+title: "GBM-dataCleaning"
+author: "Shixue Sun"
+date: "2023-05-25"
+output:
+  html_document: default
+  pdf_document: default
+---
+### loading environment
+```{r loading environment}
+library(DESeq2)  ## DE gene analysis
+library(limma)  ## DE gene analysis
+library(bread)  ## read partial of the file - saving memory way to view huge files
+library(tidyverse)  ## merge 2+ expression matrics into one by gene names
+library(ggplot2)  ## for PCA plot
+library(dplyr)
+
+```
+
+
+### data structure overview
+```{r data strucure overview}
+## read data
+readLines ('.../GSE119774_GBM_GSC_i850K_pvals_formatted.txt', n=2)
+dt <- read.table('.../GSE119834_fpkm_table.txt', header =T, nrows = 2)
+dim(dt)
+View(dt)
+
+### read only required columns (samples) from big files
+dt <- read.table('.../GSE109379_processed_data.txt', header =T, row.names =1, nrows = 5, skip = 1, colClasses = c('co1','col2'))
+
+### get dimension of big files without opening 
+bread::bcolnames('.../GSE119834_fpkm_table.txt')
+bread::bmeta('.../GSE119834_fpkm_table.txt') 
+bread::bnrow('.../GSE119774_GBM_GSC_i850K_beta_formatted.txt') 
+
+```
+
+
+
+#### input expression data prepare
+```{r input expression data prepare}
+##  extraction of GBM sample ID
+## set read and write path
+inpath <- '.../mRNA-seq/'
+outpath <- '.../mRNA/'
+
+## set file paths for patient cinical information and mRNA sequencing data  
+filepath_693 <- paste(inpath, 'CGGA.mRNAseq_693_GBM_clinical.txt', sep = '')
+filepath_325 <- paste(inpath, 'CGGA.mRNAseq_325_GBM_clinical.txt', sep = '')
+inpath_rc_693 <- paste(inpath, 'CGGA.mRNAseq_693.Read_Counts-genes.20220620.txt', sep = '')
+inpath_rc_325 <- paste(inpath, 'CGGA.mRNAseq_325.Read_Counts-genes.20220620.txt', sep = '')
+inpath_rc_ct <- paste(inpath, 'CGGA.normal_20.Read_Counts-genes.20230104.txt', sep = '')
+
+# extract sample ID
+# list_693 <- limma::read.columns (filepath_693, required.col = 'CGGA_ID')
+# list_325 <- limma::read.columns (filepath_325, required.col = 'CGGA_ID')
+  
+##  extract mRNA expression read counts of GBM and control sujects
+rc_693 <- limma::read.columns (inpath_rc_693, required.col = c('gene_name', as.vector(list_693[,1])))   
+rc_325 <- limma::read.columns (inpath_rc_325, required.col = c('gene_name', as.vector(list_325[,1])))  
+rc_ct <- read.table(inpath_rc_ct, header = T)
+
+View(rc_693)
+View(rc_325)
+View(rc_ct)
+
+### merge expression matrices into one file
+library(tidyverse)
+df_list <- list(rc_693, rc_325, rc_ct)
+mt_rc  <- df_list %>% reduce(full_join, by='gene_name')
+
+## save merged data frame
+View(mt_rc)
+outpath_cts <- paste(inpath,'CountData.csv',sep = '')
+write.csv(mt_rc, file = outpath_cts, row.names = FALSE)
+
+## save to text
+outpath_txt <- paste(inpath,'CountData.txt',sep = '')
+write.table(mt_rc, file = outpath_txt, row.names = FALSE)
+
+```
+
+
+#### PCA analysis for combined expression matrix
+```{r PCA analysis for combined expression matrix}
+## set file path
+path_cts <- paste(inpath, 'CountData.txt',sep = '') 
+path_col <- paste(inpath, 'colname.csv',sep = '')
+### read exprssion data and colname information
+cts <- read.table(path_cts, header = T, row.names = 1)
+coln <- read.csv(path_col, header = T, row.names = 1)
+
+coln$Condition <- factor(coln$Condition)
+coln$Group <- factor(coln$Group)
+
+### adjust order of col names in two data sets 
+all(rownames(coln) %in% colnames(cts))  ## if all sample IDs included
+# [1] TRUE
+all(rownames(coln) == colnames(cts))  ## if sample IDs in same order
+# [1] FALSE
+
+cts <- cts[, rownames(coln)]
+all(rownames(coln) == colnames(cts))
+# [1] TRUE
+
+library(DESeq2)
+
+## generate data set for analysis
+dds <- DESeqDataSetFromMatrix(countData = cts,
+                              colData = coln,
+                              design = ~ Condition)
+dds
+
+colData(dds)
+
+### vst transforming for the dataset
+
+vsd <- vst(dds, blind=FALSE)  ## variance stabilizing for PCA
+
+### PCA pot 
+plotPCA(vsd, intgroup="Group", shape = F)
+
+###PCA using ggplot2
+pcaData <- plotPCA(vsd, intgroup='Group', returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+
+## save plot
+pdfpath <- paste(outpath,'PCAPlot.pdf', sep = '')
+pdfpath01 <- paste(outpath,'PCAPlot+name.pdf', sep = '')
+
+pdf(file = pdfpath, width = 12, height = 10)
+ ggplot(pcaData, aes(PC1, PC2, color=Group, shape=Group)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  coord_fixed() 
+dev.off() 
+
+### save PCA plot with sample IDs
+pdf(file = pdfpath01, width = 12, height = 10)
+ ggplot(pcaData, aes(PC1, PC2, color=Group, shape=Group)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  coord_fixed() + 
+  geom_label(aes(label = name))
+dev.off() 
+ 
+
+```
+
+
+
+### remove outlier samples (based on PCA plot)
+```{r remove outlier samples}
+## methods correcting batch effect being tested: edgeR, Deseq2, limma-voom, limma-deseq2
+
+## outlier samples: 
+outlier <- read.table(file = paste(inpath, 'outliers.txt', sep=''), header = F)
+### generate new expression mt and colname 
+cts.new <- cts[,!colnames(cts) %in%  as.vector(outlier[,1])]
+coln.new <- coln[!row.names(coln) %in%  as.vector(outlier[,1]),]
+
+coln.new$Condition <- factor(coln.new$Condition)
+coln.new$Group <- factor(coln.new$Group)
+
+### adjust order of col names in two data sets 
+all(rownames(coln.new) %in% colnames(cts.new))  ## if all sample IDs included
+# [1] TRUE
+all(rownames(coln.new) == colnames(cts.new))  ## if sample IDs in same order
+# [1] FALSE
+
+cts.new <- cts.new[, rownames(coln.new)]
+all(rownames(coln.new) == colnames(cts.new))
+# [1] TRUE
+
+
+### save data
+write.table(cts.new, file = paste(inpath, 'CountData_new.txt', sep=''))
+write.table(coln.new, file = paste(inpath, 'Colname_new.txt', sep=''))
+
+###PAC after outliers removing
+
+## generate data set for analysis
+dds <- DESeqDataSetFromMatrix(countData = cts.new,
+                              colData = coln.new,
+                              design = ~ Group)
+dds
+
+colData(dds)
+
+dds <- DESeq(dds)
+res <- results(dds)
+res
+
+vsd <- vst(dds, blind=FALSE)
+pdf(file = paste(outpath, 'PAC_no_outlier.pdf', sep = ''), width = 12, height = 10)
+plotPCA(vsd, intgroup="Group")
+dev.off()
+
+# advanced pac plot
+pcaData <- plotPCA(vsd, intgroup='Group', returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+pdf(file = paste(outpath, 'PAC_no_outlier01.pdf', sep = ''), width = 12, height = 10)
+ ggplot(pcaData, aes(PC1, PC2, color=Group, shape=Group)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  coord_fixed() 
+dev.off() 
+ 
+
+```
+
+### DE-seq analysis
+```{r DE-seq analysis}
+
+# 1 GBM vs. control
+dds <- DESeqDataSetFromMatrix(countData = cts.new,
+                              colData = coln.new,
+                              design = ~ Condition)
+dds
+# data filtering
+keep <- rowSums(counts(dds)) >= 10
+dds <- dds[keep,]
+# dds$condition <- relevel(dds$condition, ref = "Control")
+dds <- DESeq(dds)
+res <- results(dds)
+res
+summary(res)
+# out of 50516 with nonzero total read count
+# adjusted p-value < 0.1
+# LFC > 0 (up)       : 12138, 24%
+# LFC < 0 (down)     : 8512, 17%
+# outliers [1]       : 0, 0%
+# low counts [2]     : 11753, 23%
+res05 <- results(dds, alpha=0.05)
+summary(res05)
+# out of 50516 with nonzero total read count
+# adjusted p-value < 0.05
+# LFC > 0 (up)       : 10686, 21%
+# LFC < 0 (down)     : 7784, 15%
+# outliers [1]       : 0, 0%
+# low counts [2]     : 12732, 25%
+
+resOrdered <- res[order(res$pvalue),]
+write.table(as.data.frame(resOrdered),file= paste(outpath, "GBM_control_results.txt", sep = '') )
+write.csv(as.data.frame(resOrdered),file= paste(outpath, "GBM_control_results.csv", sep = '') )
+
+
+
+## MA plot
+plotMA(res05, ylim=c(-15,8))
+resNorm <- lfcShrink(dds, coef=2, type="normal")
+resAsh <- lfcShrink(dds, coef=2, type="ashr")
+
+png(file=paste(outpath, 'MAplot.png', sep = ''), width=8, height=6, units='in',res = 300)
+par(mar = c(2, 2, 1.5, 1))
+plotMA(resAsh,  main="MA plot", ylim=c(-12,8))
+dev.off()
+
+## volcano plot 
+smoc2_res_all <- data.frame(res)  %>% mutate(threshold = padj < 0.001)
+# View(smoc2_res_all)
+
+png(file=paste(outpath, 'volcano_plot.png', sep = ''), width=8, height=6, units='in',res = 300)
+ggplot(smoc2_res_all) + 
+        geom_point(aes(x = log2FoldChange, y = -log10(padj), color = threshold)) + 
+        xlab("log2 fold change") + 
+        ylab("-log10 adjusted p-value") + 
+        theme(legend.position = "none", 
+              plot.title = element_text(size = rel(1.5), hjust = 0.5), 
+              axis.title = element_text(size = rel(1.25)))
+dev.off()
+
+# primary GBM vs. control
+
+resultsNames(dds)
+
+```
+
+
