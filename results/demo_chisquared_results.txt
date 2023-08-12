@@ -1,0 +1,57 @@
+------------------------------Chi-square test results for Gender------------------------------
+Observed frequencies table:
+Gender  GBM_counts
+Female         434
+  Male         717
+Chi-squared statistic:	[81.38436515]
+p-value:	1.858e-19
+Expected frequencies table:
+Gender  genpop_counts
+  Male            564
+Female            587
+Are all expected frequencies greater than 5?	True
+There is a significant association between being recorded as having GBM and being male or female.
+
+
+------------------------------Chi-square test results for Race------------------------------
+Observed frequencies table:
+                Race  GBM_counts
+               Asian          36
+  Black/African Amer          76
+Hawaiian/Pac. Island           2
+       Multiple Race           9
+               White         999
+Am Indian/Alaska Nat           4
+                 NaN          25
+Chi-squared statistic:	[326.15249747]
+p-value:	2.023e-67
+Expected frequencies table:
+                Race  genpop_counts
+               White            709
+  Black/African Amer            143
+Am Indian/Alaska Nat             13
+               Asian             69
+Hawaiian/Pac. Island              2
+                 NaN             97
+       Multiple Race            118
+Are all expected frequencies greater than 5?	False
+There is a significant association between being recorded as having GBM and being of a certain race.
+Due to one expected count being less than 5, bear in mind that the null hypothesis could have been falsely rejected in this case.
+
+------------------------------Chi-square test results for Ethnicity------------------------------
+Observed frequencies table:
+             Ethnicity  GBM_counts
+    Hispanic or Latino          31
+Not Hispanic or Latino        1103
+                   NaN          17
+Chi-squared statistic:	[766.25310346]
+p-value:	4.076e-167
+Expected frequencies table:
+             Ethnicity  genpop_counts
+    Hispanic or Latino            216
+Not Hispanic or Latino            935
+                   NaN              0
+Are all expected frequencies greater than 5?	False
+There is a significant association between being recorded as having GBM and being Hispanic/Latino or not.
+Due to one expected count being less than 5, bear in mind that the null hypothesis could have been falsely rejected in this case.
+

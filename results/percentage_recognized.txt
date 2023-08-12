@@ -1,0 +1,4 @@
+Normalized Drugs:
+	Recognized: 719
+	Total: 777
+	Percent recognized: 92.54%

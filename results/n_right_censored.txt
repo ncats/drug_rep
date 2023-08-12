@@ -1,0 +1,1 @@
+Right-censored: 43	Total: 396	Percent right-censored: 10.86%

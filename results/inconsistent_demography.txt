@@ -1,0 +1,15 @@
+--------------------Inconsistent Race info between Vitals and Diagnoses data-types--------------------
+Rows where Race is different for the two columns:
+Empty DataFrame
+In terms of recorded Race, all Subjects across the two spreadsheets/data-types have consistent information.
+
+--------------------Inconsistent Gender info between Vitals and Diagnoses data-types--------------------
+Rows where Gender is different for the two columns:
+Empty DataFrame
+In terms of recorded Gender, all Subjects across the two spreadsheets/data-types have consistent information.
+
+--------------------Inconsistent Ethnic_group info between Vitals and Diagnoses data-types--------------------
+Rows where Ethnic_group is different for the two columns:
+Empty DataFrame
+In terms of recorded Ethnic_group, all Subjects across the two spreadsheets/data-types have consistent information.
+
