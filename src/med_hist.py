@@ -108,14 +108,15 @@ def preprocess_meds_df(filepath: str=FILEPATH_MEDICATION) -> pd.DataFrame:
 
 
 def despace_col_names(formatted_df: pd.DataFrame) -> pd.DataFrame:
-    # Remove spaces in column names (so they won't get affected by `split(' ')` later on)
+    '''Remove spaces in column names (so they won't get affected by `split(' ')` later on)---a purely aesthetic change.'''
     formatted_df = formatted_df.rename(
         columns={col: col.replace(' ', '_') for col in formatted_df.columns})
     return formatted_df
 
 
 
-def retain_confirmed_admin(unconfirmed_df: pd.DataFrame) -> pd.DataFrame:
+def retain_confirmed_admin(unconfirmed_df: pd.DataFrame,
+                           include_unconfirmed: bool=False) -> pd.DataFrame:
     '''Mark rows for filtering based on confirmed administration. Effectively standardizes administration information between CRIS and MIS.'''
 
     print('Filtering out unconfirmed administration...')
@@ -139,11 +140,11 @@ def retain_confirmed_admin(unconfirmed_df: pd.DataFrame) -> pd.DataFrame:
                     if pd.notna(row['Order_Note']):
                         return 'CHECK'  # yes order note means generally admin'd
                     else:
-                        return 'NO'  # no order note means not admin'd
+                        return 'NO'  # no order note means don't know if admin'd; filter out to be safe TK include AND not include
     # Decide using above function
     unconfirmed_df['mark_confirmed_admin'] = unconfirmed_df.apply(decide_confirmed_admin, axis='columns')
     # Filter using above decision ('CHECK's are included to be lenient, but have false positives)
-    unconfirmed_df = unconfirmed_df[unconfirmed_df['mark_confirmed_admin'].isin(['YES', 'CHECK'])]
+    unconfirmed_df = unconfirmed_df[unconfirmed_df['mark_confirmed_admin'].isin(['YES', 'CHECK'] + (['NO'] if include_unconfirmed else []))]
 
     '''CRIS: `Event_Primary_Date_Time` represents date of ORDER (not necessarily administration), so default to `Admin Performed Dt`.'''
     '''MIS: `Event_Primary_Date_Time` represents date of administration (`Admin Performed Dt` == NULL), so default to `Event_Primary_Date_Time`'''
@@ -167,7 +168,8 @@ def retain_confirmed_admin(unconfirmed_df: pd.DataFrame) -> pd.DataFrame:
 # TK fix comments
 '''TK: Note the order of marking-prefixes: "$$$" (of-interest) comes before "***" (pre-GBM)'''
 def retain_post_GBM_orders(confirmed_df: pd.DataFrame,
-                           filepath_dx: str = '../intermediates/only_GBM_dx_dates.pkl') -> pd.DataFrame:
+                           filepath_dx: str = '../intermediates/only_GBM_dx_dates.pkl',
+                           include_pre_GBM_orders: bool=False) -> pd.DataFrame:
     '''Does not exit pipe. TK (rewrite) Indicate whether administration date occurred before or after GBM diagnosis date. (TK update instruction) Must be placed before `indicate_investigational_orders()` in the pipeline.'''
 
     print('Filtering out administrations before GBM diagnosis...')
@@ -186,22 +188,23 @@ def retain_post_GBM_orders(confirmed_df: pd.DataFrame,
         f'Number of Confirmed rows: {len(confirmed_df)}\tNumber of Unique Confirmed: {confirmed_df.index.nunique()}')
     print(dx_and_meds_df[['Date_of_death', 'Date_of_Diagnosis', 'Age_at_Time_of_Diagnosis']].info())
 
-    # Indicate pre-GBM-diagnoses administration dates (as `True`)
-    dx_and_meds_df['Admin_before_GBM?'] = dx_and_meds_df['Administration_Date'] < dx_and_meds_df['Date_of_Diagnosis']
+    if not include_pre_GBM_orders:
+        # Indicate pre-GBM-diagnoses administration dates (as `True`)
+        dx_and_meds_df['Admin_before_GBM?'] = dx_and_meds_df['Administration_Date'] < dx_and_meds_df['Date_of_Diagnosis']
 
-    print(
-        f'Number of administrations before diagnosis:\t{(dx_and_meds_df["Administration_Date"] < dx_and_meds_df["Date_of_Diagnosis"]).sum()} out of {len(dx_and_meds_df["Admin_before_GBM?"])}')
+        print(
+            f'Number of administrations before diagnosis:\t{(dx_and_meds_df["Administration_Date"] < dx_and_meds_df["Date_of_Diagnosis"]).sum()} out of {len(dx_and_meds_df["Admin_before_GBM?"])}')
 
-    # Filter out administrations before diagnosis
-    dx_and_meds_df = dx_and_meds_df[~dx_and_meds_df['Admin_before_GBM?']]
+        # Filter out administrations before diagnosis
+        dx_and_meds_df = dx_and_meds_df[~dx_and_meds_df['Admin_before_GBM?']]
 
-    print(
-        f'Number of Post-GBM rows: {len(dx_and_meds_df)}\tNumber of Unique Post-GBM: {dx_and_meds_df.index.nunique()}')
+        print(
+            f'Number of Post-GBM rows: {len(dx_and_meds_df)}\tNumber of Unique Post-GBM: {dx_and_meds_df.index.nunique()}')
 
     print('Filtering out administrations before GBM diagnosis done.\n')
 
     return dx_and_meds_df
-# TK the above function is messsed up because the inputted DataFrame's date and age columns are all null for some reason (i think it's fixed though; check again)
+
 
 
 def clean_order_names(post_df: pd.DataFrame) -> pd.DataFrame:
@@ -427,7 +430,8 @@ def save_tc_and_ttc_countplot(confirmed_df: pd.DataFrame):
 
 
 def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
-                            supremum_path: str = '../results/supremum_words_included.txt'):
+                            supremum_path: str = '../results/supremum_words_included.txt',
+                            save_path: str = '../intermediates/explanatory_drugs.pkl'):
     '''Request RxCUIs for drugs, as standardization.
         Exits pipe to avoid calling API idempotently (idempotently generally).'''
 
@@ -436,26 +440,22 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
     # Select and copy `Order_Name` from main DataFrame.
     drugs = drugs_df[['Order_Name']]
 
+    '''Take advantage of `sksurv`'s `OneHotEncoder` not to one-hot encode drug administration data, but encode drug administration FREQUENCY.  Since each Subject can correspond to multiple rows (i.e. multiple adminstrations), one can vector-sum the rows for a given Subject to obtain drug administration FREQUENCY.'''
     # For the one-hot encoding, cast to category type
     drugs = drugs.astype('category')
-
-    # One-hot encode the drug administration (independent) variable (spread out over multiple columns)
+    # One-hot encode the drug administration (independent) variable (spread out over multiple columns (corresponding to the multiple different drugs))
     print('One-hot encoding...')
     # Fit and transform the data
     encoded_drugs = OneHotEncoder().fit_transform(pd.DataFrame(drugs))
     print('One-hot encoding done.\n')
-
-    # For human-readability, remove of 'Order_Name=' prefix which was added by `OneHotEncoder`. Will be prefixed back later.
+    # For human-readability, remove 'Order_Name=' prefix which was added by `OneHotEncoder`. Will be prefixed back later.
     encoded_drugs = encoded_drugs.rename(
         columns={col: col.replace('Order_Name=', '') for col in encoded_drugs.columns})
-
     with open(resolve_path('../intermediates/drugs_in_onehot.json'), 'w') as file:
         json.dump(encoded_drugs.columns.tolist(), file)
 
-    # Condense (by vector-summing the rows with same index) the duplicate `Subject` rows (each representing one administration/appointment)
+    # To obtain administration frequency, consolidate (by vector-summing the rows with same index) the duplicate `Subject` rows (each representing one administration/appointment)
     dedup_drugs = encoded_drugs.groupby(encoded_drugs.index).sum()
-    # Replace non-zero values so that it's a ONE-hot encoding again
-    dedup_drugs[dedup_drugs != 0.0] = 1.0
 
     print(dedup_drugs.info())
 
@@ -492,6 +492,7 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
                  .replace('novel ', '').replace('medoral ', '')
                  .replace('sc pca ', '') for col in dedup_drugs.columns})
 
+    # Assume the different TK brands of flu vaccines are interchangeable
     dedup_drugs = dedup_drugs.rename(
         columns={col: 'influenza virus vaccine injection' for col in dedup_drugs.columns if 'influenza virus vaccine injection' in col})
 
@@ -508,8 +509,10 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
     genericizing = {
         '$$$trc105 infusion 7 mg / ml': '$$$trc105 infusion',
 
-        'carbo combo enzastaurin (125 mg tablet)': 'carbo combo enzastaurin 125 mg tablet',
-        'carbo combo enzastaurin (125 mg / tablet)': 'carbo combo enzastaurin 125 mg tablet',
+        # 'Carbo' is an abbreviation of 'carboplatin', an order of interest
+        'carbo combo enzastaurin 125 mg tablet': '$$$carboplatin combo enzastaurin 125 mg tablet',
+        'carbo combo enzastaurin (125 mg tablet)': '$$$carboplatin combo enzastaurin 125 mg tablet',
+        'carbo combo enzastaurin (125 mg / tablet)': '$$$carboplatin combo enzastaurin 125 mg tablet',
 
         'multivitamin chewable tablet': 'multivitamin tablet',
         'multivitamin with minerals tablet': 'multivitamin tablet',
@@ -521,8 +524,34 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
     }
     dedup_drugs = dedup_drugs.rename(columns=genericizing)
 
+    print(f'Number of columns:\t{len(dedup_drugs.columns)}')
+    print(f'Number of unique columns:\t{len(dedup_drugs.columns.unique())}')
+
+    # Replace columns representing multiple drugs (i.e. those with names with conjunctions such as 'combo' or 'and') into multiple, duplicate columns representing a single drug each
+    cols_2_drop = []
+    for col in dedup_drugs.columns:
+        for conj in ['combo', 'and']:
+            if conj in col:
+                cols_2_drop.append(col)
+                for split_name in col.split(' ' + conj + ' '):
+                    # If `[col]` returns multiple columns due to non-unique names
+                    if isinstance(dedup_drugs[col], pd.DataFrame):
+                        # Copy the columns
+                        singles = dedup_drugs[col].copy()
+                        # Use positional index instead of named because names are non-unique
+                        for col_idx in range(singles.shape[1]):
+                            # Rename them with a substring from the string splitting
+                            singles.columns.values[col_idx] = split_name
+                        # Concatenate the renamed columns back to the original DataFrame
+                        dedup_drugs = pd.concat([dedup_drugs, singles], axis='columns')
+                    # If `[col]` returns a single column
+                    else:
+                        dedup_drugs[split_name] = dedup_drugs[col]
+    # To complete the replacement, drop the original, not renamed columns after they have been duplicated
+    dedup_drugs = dedup_drugs.drop(columns=cols_2_drop)
+
     # Load previously obtained supremum (for efficiency when normalizing repeatedly)
-    supremum = 100
+    supremum = 100  # an arbitrarily large number
     min_tokens = []
     if os.path.getsize(resolve_path(supremum_path)) >= 2 * len(dedup_drugs.columns):
         # Open the CSV file for reading
@@ -565,7 +594,6 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
 
         # Re-mark RxCUI obtained from query
         return ('$$$' if marked_4_interest else '') + result
-
     # Normalize the drug names
     normalized_drugs = dedup_drugs.rename(
         columns={col: normalize_drug_naively(col) for col in dedup_drugs.columns})
@@ -576,6 +604,10 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
         line = f'Normalized Drugs:\n\tRecognized: {positive}\n\tTotal: {total}\n\tPercent recognized: {positive / total * 100:.2f}%\n'
         print(line)
         file.write(line)
+
+    # Manually find RxCUI
+    normalized_drugs = normalized_drugs.rename(
+        columns={'$$$carboplatin': '$$$40048'})
 
     # Prettify un-normalized drug names
     normalized_drugs = normalized_drugs.rename(
@@ -590,20 +622,21 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
     with open(resolve_path('../results/after_&_before_normalization.json'), 'w') as file:
         json.dump(after_before, file)
 
-    # Condense (by vector-summing the columns with same column names (RxCUI)) the duplicate columns to complete the normalization
+    # To obtain administration frequency, consolidate (by vector-summing the columns with same column names (RxCUI)) the duplicate columns to complete the normalization
     normalized_drugs = normalized_drugs.groupby(normalized_drugs.columns, axis='columns').sum()
     print(f'Number of drug features before normalization:\t{len(dedup_drugs.columns)}\nNumber of drug features after normalization: \t{len(normalized_drugs.columns)}')
-    # Replace non-zero values so that it's a ONE-hot encoding again
-    normalized_drugs[normalized_drugs != 0.0] = 1.0
 
     # For human-readability, restore 'Order_Name=' prefix which was added by `OneHotEncoder` and which was removed.
     normalized_drugs = normalized_drugs.rename(
         columns={col: 'Order_Name=' + col for col in normalized_drugs.columns})
 
     # Serialize (so we don't have to repeatedly use the API) the DataFrames
-    normalized_drugs.to_pickle(resolve_path(
-        '../intermediates/explanatory_drugs.pkl'))
+    normalized_drugs.to_pickle(resolve_path(save_path))
 
+
+
+def consolidate_similar_rxcs(rxcs_df: pd.DataFrame):
+    pass
 
 (preprocess_meds_df().pipe(despace_col_names)
                      .pipe(retain_confirmed_admin)
@@ -643,5 +676,3 @@ def obtain_top_n_ingreds(confirmed_df: pd.DataFrame, n_included: int=100):
     counts_melted_split_ingredients_df.head(n_included).to_csv('../results/output_ingredients.csv', index=False)
 
 
-
-# TK you forgot to account for date the medication was administered...(specifically before or after GBM diagnosis date)

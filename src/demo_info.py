@@ -4,6 +4,12 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import to_rgb
 from scipy.stats import chisquare
 from util import resolve_path
+import os
+os.environ['R_HOME'] = 'C:/Program Files/R/R-4.2.2/'
+import rpy2.robjects as ro
+from rpy2.robjects.conversion import localconverter
+from rpy2.robjects import pandas2ri
+from rpy2.robjects.packages import importr
 
 FILEPATH_VITALS = 'C:/Users/Admin_Calvin/Microwave_Documents/NIH/data/Updated_All_Vital_Sign_Data_for_Glioblastoma_Subjects_sent_to_Zhu_1-18-2023.xlsx - All_Vital_Data.csv'
 
@@ -63,9 +69,7 @@ def preprocess_demo_df(filepath: str=FILEPATH_VITALS) -> pd.DataFrame:
     return df.drop_duplicates(subset='Subject')
 
 
-
 def set_index_4_indep_demo_df(df: pd.DataFrame):
-    '''Exits pipe because further processing is done elsewhere.'''
 
     # Select desired columns
     df = df[['Subject', 'Gender', 'Race', 'Ethnicity']]
@@ -78,6 +82,51 @@ def set_index_4_indep_demo_df(df: pd.DataFrame):
 
 # Standard pipeline (preprocess %>% set_index) (NO imputation)
 # set_index_4_indep_demo_df(preprocess_demo_df())
+
+
+def impute_multinominal_demo(df: pd.DataFrame,
+                             file_suffix: str):
+
+    # Select desired columns
+    df = df[['Subject', 'Gender', 'Race', 'Ethnicity']]
+
+    # Set index to `Subject` ID, to concatenate with similar DataFrames later
+    df = df.set_index('Subject')
+
+    # Import the R packages
+    missForest = importr('missForest')
+    pandas2ri.activate()
+
+    # Convert pandas DataFrame to R data.frame
+    try:
+        with localconverter(ro.default_converter + pandas2ri.converter):
+            r_data = ro.conversion.py2rpy(df)
+    except Exception as e:
+        print(f"Error converting pandas DataFrame to R data.frame: {e}")
+
+    # Apply missForest imputation
+    imputed_data_r = missForest.missForest(r_data)
+
+    # Convert the imputed R data.frame back to a pandas DataFrame
+    try:
+        with localconverter(ro.default_converter + pandas2ri.converter):
+            imputed_data = ro.conversion.py2rpy(imputed_data_r[0])
+    except Exception as e:
+        print(f"Error converting pandas DataFrame to R data.frame: {e}")
+
+    # Serialize the DataFrame
+    pd.DataFrame(imputed_data).to_pickle(resolve_path(
+        '../intermediates/explanatory_demo_imputed' + file_suffix + '.pkl'))
+
+# Standard pipeline (preprocess %>% impute) (YES imputation)
+
+# Multiple (5 times) imputation
+print('Performing multiple imputation...')
+df = preprocess_demo_df()
+for i in range(5):
+    impute_multinominal_demo(df, str(i))
+    print(f'Imputation {str(i)} done.')
+print('Performing multiple imputation done.')
 
 
 # ==============================================================================
@@ -98,6 +147,8 @@ plt.rc('legend', fontsize=PLOT_MEDIUM_SIZE)    # legend fontsize
 
 def visualize_demo_piecharts(uniques_df: pd.DataFrame):
     '''Three simple pie charts for each of `['Gender', 'Race', 'Ethnicity']`. Exits pipeline because it's not modifying the data.'''
+
+    # TK import filtered rows for creating pie-charts; don't create pie-charts up-front
 
     # List of columns for which to create pie charts
     plotted_cols = ['Gender', 'Race', 'Ethnicity']
@@ -247,6 +298,8 @@ def test_chisq_association(df: pd.DataFrame):
                         np.nan: 0}  # not on Census
 
     GENPOP_DICTS = [GENPOP_GENDER_DICT, GENPOP_RACE_DICT, GENPOP_ETHNIC_DICT]
+
+    # TK add glioblastoma literature demographic characteristics to see if my dataset is representative of broader glioblastoma patient dataset
 
     EXPECTED_SIZE = df.shape[0]
 

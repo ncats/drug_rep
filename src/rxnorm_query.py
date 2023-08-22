@@ -29,7 +29,8 @@ def query_getRxTermDisplayName(search_str: str) -> str:
 
 def query_findRxcuiByString(search_str: str, verbose: bool=False) -> str:
     '''Helper function: Query the RxNorm findRxcuiByString API.'''
-    rxnorm_url = 'https://rxnav.nlm.nih.gov/REST/rxcui.json'
+    rxnorm_url = 'http://localhost:4000/REST/rxcui.json'
+    # rxnorm_url = 'https://rxnav.nlm.nih.gov/REST/rxcui.json'
     # Encode the payload
     rxnorm_payload = dict(name=search_str, search=2)
     encoded_rxnorm_payload = urlencode(rxnorm_payload, quote_via=quote_plus)
@@ -49,5 +50,3 @@ def query_findRxcuiByString(search_str: str, verbose: bool=False) -> str:
     else:
         print('Request failed with status code:', response.status_code)
         return ''
-
-
