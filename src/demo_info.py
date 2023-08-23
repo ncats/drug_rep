@@ -116,7 +116,7 @@ def impute_multinominal_demo(df: pd.DataFrame,
 
     # Serialize the DataFrame
     pd.DataFrame(imputed_data).to_pickle(resolve_path(
-        '../intermediates/explanatory_demo_imputed' + file_suffix + '.pkl'))
+        f'../intermediates/explanatory_demo_imputed{file_suffix}.pkl'))
 
 # Standard pipeline (preprocess %>% impute) (YES imputation)
 

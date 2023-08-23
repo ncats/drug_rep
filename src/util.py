@@ -1,6 +1,6 @@
 import os
 
-BASE_DIRECTORY = 'X:/Desktop - Data Drive/NCATS/src/'
+BASE_DIRECTORY = 'X:/Desktop - Data Drive/drug_rep/src/'
 
 def resolve_path(relative_path: str) -> str:
     '''Resolve the relative file path using os.path.abspath()'''

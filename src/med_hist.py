@@ -169,7 +169,7 @@ def retain_confirmed_admin(unconfirmed_df: pd.DataFrame,
 '''TK: Note the order of marking-prefixes: "$$$" (of-interest) comes before "***" (pre-GBM)'''
 def retain_post_GBM_orders(confirmed_df: pd.DataFrame,
                            filepath_dx: str = '../intermediates/only_GBM_dx_dates.pkl',
-                           include_pre_GBM_orders: bool=False) -> pd.DataFrame:
+                           include_pre_GBM_orders: bool = False) -> pd.DataFrame:
     '''Does not exit pipe. TK (rewrite) Indicate whether administration date occurred before or after GBM diagnosis date. (TK update instruction) Must be placed before `indicate_investigational_orders()` in the pipeline.'''
 
     print('Filtering out administrations before GBM diagnosis...')
@@ -431,7 +431,9 @@ def save_tc_and_ttc_countplot(confirmed_df: pd.DataFrame):
 
 def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
                             supremum_path: str = '../results/supremum_words_included.txt',
-                            save_path: str = '../intermediates/explanatory_drugs.pkl'):
+                            include_unconfirmed: bool = False,
+                            include_pre_GBM_orders: bool = False,
+                            save_final_df: bool = True):
     '''Request RxCUIs for drugs, as standardization.
         Exits pipe to avoid calling API idempotently (idempotently generally).'''
 
@@ -622,28 +624,34 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
     with open(resolve_path('../results/after_&_before_normalization.json'), 'w') as file:
         json.dump(after_before, file)
 
-    # To obtain administration frequency, consolidate (by vector-summing the columns with same column names (RxCUI)) the duplicate columns to complete the normalization
-    normalized_drugs = normalized_drugs.groupby(normalized_drugs.columns, axis='columns').sum()
-    print(f'Number of drug features before normalization:\t{len(dedup_drugs.columns)}\nNumber of drug features after normalization: \t{len(normalized_drugs.columns)}')
+    if save_final_df:
+        # To obtain administration frequency, consolidate (by vector-summing the columns with same column names (RxCUI)) the duplicate columns to complete the normalization
+        normalized_drugs = normalized_drugs.groupby(normalized_drugs.columns, axis='columns').sum()
+        print(f'Number of drug features before normalization:\t{len(dedup_drugs.columns)}\nNumber of drug features after normalization: \t{len(normalized_drugs.columns)}')
 
-    # For human-readability, restore 'Order_Name=' prefix which was added by `OneHotEncoder` and which was removed.
-    normalized_drugs = normalized_drugs.rename(
-        columns={col: 'Order_Name=' + col for col in normalized_drugs.columns})
+        # For human-readability, restore 'Order_Name=' prefix which was added by `OneHotEncoder` and which was removed.
+        normalized_drugs = normalized_drugs.rename(
+            columns={col: 'Order_Name=' + col for col in normalized_drugs.columns})
 
-    # Serialize (so we don't have to repeatedly use the API) the DataFrames
-    normalized_drugs.to_pickle(resolve_path(save_path))
+        # Serialize (so we don't have to repeatedly use the API) the DataFrames
+        normalized_drugs.to_pickle(resolve_path(
+            f'../intermediates/explanatory_drugs{str(include_unconfirmed)}{str(include_pre_GBM_orders)}.pkl'))
 
 
 
 def consolidate_similar_rxcs(rxcs_df: pd.DataFrame):
     pass
 
-(preprocess_meds_df().pipe(despace_col_names)
-                     .pipe(retain_confirmed_admin)
-                     .pipe(retain_post_GBM_orders)
-                     .pipe(clean_order_names)
-                     .pipe(indicate_investigational_orders)
-                     .pipe(obtain_rxcui_from_drugs))
+
+
+for b1 in [True, False]:  # Whether or not to include unconfirmed admins
+    for b2 in [True, False]:  # Whether or not to include pre-GBM admins
+        (preprocess_meds_df().pipe(despace_col_names)
+                             .pipe(retain_confirmed_admin, include_unconfirmed=b1)
+                             .pipe(retain_post_GBM_orders, include_pre_GBM_orders=b2)
+                             .pipe(clean_order_names)
+                             .pipe(indicate_investigational_orders)
+                             .pipe(obtain_rxcui_from_drugs,             include_unconfirmed=b1,             include_pre_GBM_orders=b2))
 
 
 # ==============================================================================
