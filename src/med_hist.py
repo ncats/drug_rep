@@ -552,53 +552,62 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
     # To complete the replacement, drop the original, not renamed columns after they have been duplicated
     dedup_drugs = dedup_drugs.drop(columns=cols_2_drop)
 
-    # Load previously obtained supremum (for efficiency when normalizing repeatedly)
-    supremum = 100  # an arbitrarily large number
-    min_tokens = []
-    if os.path.getsize(resolve_path(supremum_path)) >= 2 * len(dedup_drugs.columns):
-        # Open the CSV file for reading
-        with open(resolve_path(supremum_path), 'r') as file:
-            set_string = file.read()
-            if set_string.endswith(','):
-                set_string = set_string[:-1]
-            min_tokens = json.loads('[' + set_string + ']')
-        supremum = max(min_tokens)
-    # Empty the 'supremum_words_included.txt' file
-    with open(resolve_path(supremum_path), 'w'):
-        pass
+    EXISTING_MAPPING_FILEPATH = resolve_path(
+        '../results/before_&_after_normalization.json')
+    if os.path.exists(EXISTING_MAPPING_FILEPATH):
+        # Load previously obtained normalization mapping
+        with open(EXISTING_MAPPING_FILEPATH, 'r') as file:
+            # Normalize the drug names
+            normalized_drugs = dedup_drugs.rename(columns=json.loads(file.read()))
+    else:
+        # If normalization mapping does not yet exist, query the API to generate it
+        # Load previously obtained supremum (for efficiency when normalizing repeatedly)
+        supremum = 100  # an arbitrarily large number
+        min_tokens = []
+        if os.path.getsize(resolve_path(supremum_path)) >= 2 * len(dedup_drugs.columns):
+            # Open the CSV file for reading
+            with open(resolve_path(supremum_path), 'r') as file:
+                set_string = file.read()
+                if set_string.endswith(','):
+                    set_string = set_string[:-1]
+                min_tokens = json.loads('[' + set_string + ']')
+            supremum = max(min_tokens)
+        # Empty the 'supremum_words_included.txt' file
+        with open(resolve_path(supremum_path), 'w'):
+            pass
 
-    def normalize_drug_naively(drug_name: str) -> str:
-        '''Get drug RxCUIs via raw-inputted (no non-RxNorm NER) RxNorm.'''
+        def normalize_drug_naively(drug_name: str) -> str:
+            '''Get drug RxCUIs via raw-inputted (no non-RxNorm NER) RxNorm.'''
 
-        # Check whether the order had been marked
-        marked_4_interest = drug_name.startswith('$$$')
-        # Unmark temporarily
-        if marked_4_interest:
-            drug_name = drug_name.replace('$$$', '')
+            # Check whether the order had been marked
+            marked_4_interest = drug_name.startswith('$$$')
+            # Unmark temporarily
+            if marked_4_interest:
+                drug_name = drug_name.replace('$$$', '')
 
-        # Rudimentarily tokenize the drug name
-        split_order = drug_name.split(' ')
+            # Rudimentarily tokenize the drug name
+            split_order = drug_name.split(' ')
 
-        # Default result (in case the drug name not recognized, thus RxCUI not assigned)
-        result = drug_name
+            # Default result (in case the drug name not recognized, thus RxCUI not assigned)
+            result = drug_name
 
-        # If full name doesn't work, repeatedly try to search smaller and smaller substrings (prioritizing front of string)
-        for n_words_included in range(min(supremum, len(split_order)), 0, -1):
-            search_string = ' '.join(split_order[:n_words_included-1])
-            if verbose:
-                print(f'Querying for {search_string} with {n_words_included} words included...')
-            drug_rxcui = query_findRxcuiByString(search_string)
-            if drug_rxcui != '' and drug_rxcui.isdigit():
-                result = str(drug_rxcui)
-                with open(resolve_path('../results/supremum_words_included.txt'), 'a') as file:
-                    file.write(str(n_words_included) + ',')
-                break
+            # If full name doesn't work, repeatedly try to search smaller and smaller substrings (prioritizing front of string)
+            for n_words_included in range(min(supremum, len(split_order)), 0, -1):
+                search_string = ' '.join(split_order[:n_words_included-1])
+                if verbose:
+                    print(f'Querying for {search_string} with {n_words_included} words included...')
+                drug_rxcui = query_findRxcuiByString(search_string)
+                if drug_rxcui != '' and drug_rxcui.isdigit():
+                    result = str(drug_rxcui)
+                    with open(resolve_path('../results/supremum_words_included.txt'), 'a') as file:
+                        file.write(str(n_words_included) + ',')
+                    break
 
-        # Re-mark RxCUI obtained from query
-        return ('$$$' if marked_4_interest else '') + result
-    # Normalize the drug names
-    normalized_drugs = dedup_drugs.rename(
-        columns={col: normalize_drug_naively(col) for col in dedup_drugs.columns})
+            # Re-mark RxCUI obtained from query
+            return ('$$$' if marked_4_interest else '') + result
+        # Normalize the drug names
+        normalized_drugs = dedup_drugs.rename(
+            columns={col: normalize_drug_naively(col) for col in dedup_drugs.columns})
 
     # Evaluate the above NER method by calculating the percentage of drug names it recognized (possibly false-positively).
     total, positive = len(normalized_drugs.columns), len([col for col in normalized_drugs.columns if col.replace('$$$', '').isdigit()])
@@ -615,20 +624,33 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
     normalized_drugs = normalized_drugs.rename(
         columns={col: col.replace(' - ', '-') for col in normalized_drugs.columns})
 
-    # Examine and print the index, before and after normalization
-    after_before = {}
-    for (rxcui, name) in zip(normalized_drugs.columns, dedup_drugs.columns):
-        print(f'{rxcui}: {name}')
-        after_before.update({rxcui:name})
+
+    # # Examine and (pretty-)print the index, AFTER and before normalization
+    # before_after = {}
+    # for (rxcui, name) in zip(normalized_drugs.columns, dedup_drugs.columns):
+    #     print(f'{rxcui}: {name}')
+    #     before_after.update({rxcui:name})
+    # # Serialize the before-and-after (note: informally, since dicts are unique in their keys)
+    # with open(resolve_path('../results/after_&_before_normalization.json'), 'w') as file:
+    #     json.dump(before_after, file)
+
+
+    # Print the index, before and after normalization.  Recommended if generating multiple DataFrames
+    before_after = {}
+    for (name, rxcui) in zip(dedup_drugs.columns, normalized_drugs.columns):
+        print(f'{name}: {rxcui}')
+        before_after.update({name: rxcui})
     # Serialize the before-and-after (note: informally, since dicts are unique in their keys)
-    with open(resolve_path('../results/after_&_before_normalization.json'), 'w') as file:
-        json.dump(after_before, file)
+    with open(resolve_path('../results/before_&_after_normalization.json'), 'w') as file:
+        json.dump(before_after, file)
+
+    # To obtain administration frequency, consolidate (by vector-summing the columns with same column names (RxCUI)) the duplicate columns to complete the normalization
+    normalized_drugs = normalized_drugs.groupby(
+        normalized_drugs.columns, axis='columns').sum()
+    print(
+        f'Number of drug features before normalization:\t{len(dedup_drugs.columns)}\nNumber of drug features after normalization: \t{len(normalized_drugs.columns)}')
 
     if save_final_df:
-        # To obtain administration frequency, consolidate (by vector-summing the columns with same column names (RxCUI)) the duplicate columns to complete the normalization
-        normalized_drugs = normalized_drugs.groupby(normalized_drugs.columns, axis='columns').sum()
-        print(f'Number of drug features before normalization:\t{len(dedup_drugs.columns)}\nNumber of drug features after normalization: \t{len(normalized_drugs.columns)}')
-
         # For human-readability, restore 'Order_Name=' prefix which was added by `OneHotEncoder` and which was removed.
         normalized_drugs = normalized_drugs.rename(
             columns={col: 'Order_Name=' + col for col in normalized_drugs.columns})
@@ -640,10 +662,25 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
 
 
 def consolidate_similar_rxcs(rxcs_df: pd.DataFrame):
+    '''To consolidate identical drugs (which may have been normalized with different RxCUIs), use the _TK RxClass API to create a similarity matrix (more like "identicality" matrix), from which pairs of identical drugs can be identified and consolidated.'''
     pass
 
 
 
+def filter_by_frequency(consolid_df: pd.DataFrame):
+    pass
+
+
+
+# # Default (do this first before running non-default pipeline)
+# (preprocess_meds_df().pipe(despace_col_names)
+#                      .pipe(retain_confirmed_admin)
+#                      .pipe(retain_post_GBM_orders)
+#                      .pipe(clean_order_names)
+#                      .pipe(indicate_investigational_orders)
+#                      .pipe(obtain_rxcui_from_drugs, save_final_df=False))
+
+# Non-default (generating multiple DataFrames; run default pipeline first)
 for b1 in [True, False]:  # Whether or not to include unconfirmed admins
     for b2 in [True, False]:  # Whether or not to include pre-GBM admins
         (preprocess_meds_df().pipe(despace_col_names)

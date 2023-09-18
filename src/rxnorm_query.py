@@ -4,7 +4,7 @@ import requests
 
 
 def query_getRxTermDisplayName(search_str: str) -> str:
-    '''Re-obtain concept names from RxCUIs.'''
+    '''Helper function: Query the RxNorm getRxTermDisplayName API, which returns "[s]trings to support auto-completion in a user interface."  Used in actuality to re-obtain concept names from RxCUIs.'''
     rxnorm_url = 'https://rxnav.nlm.nih.gov/REST/rxcui/'
     encoded_rxnorm_payload = urlencode({'prop':'names'}, quote_via=quote_plus)
     # Make a GET request:
@@ -28,11 +28,12 @@ def query_getRxTermDisplayName(search_str: str) -> str:
 
 
 def query_findRxcuiByString(search_str: str, verbose: bool=False) -> str:
-    '''Helper function: Query the RxNorm findRxcuiByString API.'''
-    rxnorm_url = 'http://localhost:4000/REST/rxcui.json'
-    # rxnorm_url = 'https://rxnav.nlm.nih.gov/REST/rxcui.json'
+    '''Helper function: Query the RxNorm findRxcuiByString API, which returns "[c]oncepts with a specified name".'''
+    # rxnorm_url = 'http://localhost:4000/REST/rxcui.json'
+    rxnorm_url = 'https://rxnav.nlm.nih.gov/REST/rxcui.json'
     # Encode the payload
     rxnorm_payload = dict(name=search_str, search=2)
+    # Parameter `search` (precision): 2: Best match (exact or normalized)
     encoded_rxnorm_payload = urlencode(rxnorm_payload, quote_via=quote_plus)
     # Make a GET request:
     print('Making request to RxNorm...')

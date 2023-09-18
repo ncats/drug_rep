@@ -217,7 +217,8 @@ def deduplicate_gbm_dx(df: pd.DataFrame):
 
         # GBM == GARD2491 TK include other codes?
         filter_result = rows_GBM[rows_GBM['gbm_dx_marker'] |
-                                (rows_GBM['ICD if Available'] == '2491')]
+                                (rows_GBM['ICD if Available'] == '2491') |
+                                (rows_GBM['ICD if Available'] == '6512')]
 
         print(f'Total Rows in this D.F.:\t{len(rows_GBM)}\nRows recording GBM diagnosis:\t{len(filter_result)}\nSubjects with GBM diagnosis:\t{len(filter_result.drop_duplicates(subset="Subject"))}')
 
