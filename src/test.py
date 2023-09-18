@@ -16,10 +16,18 @@ import pandas as pd
 
 from util import resolve_path
 
-cv_results = pd.read_pickle(resolve_path('../results/cv_results.pkl'))
-print(cv_results)
+from lifelines.datasets import load_rossi
+rossi = load_rossi()
+print(rossi.head(7))
+print(rossi.info())
+cph = CoxPHFitter()
 
-best_model_coefs = pd.read_pickle(resolve_path('../results/best_coefs.pkl'))
-print(best_model_coefs[best_model_coefs['coefficient'] != 0])
+cph.fit(rossi, 'week', 'arrest')
+
+# cv_results = pd.read_pickle(resolve_path('../results/cv_results.pkl'))
+# print(cv_results)
+
+# best_model_coefs = pd.read_pickle(resolve_path('../results/best_coefs.pkl'))
+# print(best_model_coefs[best_model_coefs['coefficient'] != 0])
 
 

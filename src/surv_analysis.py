@@ -1,16 +1,8 @@
-import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import json
-import re
 from util import resolve_path
-
-# import sys
-# import sklearn.neighbors._base
-# sys.modules['sklearn.neighbors.base'] = sklearn.neighbors._base
-# # Link: https://github.com/epsilon-machine/missingpy/issues/38#issuecomment-1614864022
-# from missingpy import MissForest
 
 from lifelines import CoxPHFitter
 
@@ -22,21 +14,17 @@ from sklearn.exceptions import FitFailedWarning
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn import set_config
-set_config(display='text')  # displays text representation of estimators
 
 '''Citation: Scikit-learn: Machine Learning in Python, Pedregosa et al., JMLR 12, pp. 2825-2830, 2011.'''
 
+set_config(display='text')  # displays text representation of estimators
 # TK (rewrite) to incorporate one-hot encoding
 def format_4_assumption_tests(filepath_dx: str='../intermediates/only_GBM_dx_dates.pkl',
                               filepath_meds: str='../intermediates/explanatory_drugs.pkl',
-                              filepath_demo: str='../intermediates/explanatory_demo.pkl',
-                              filepath_labs: str='../intermediates/explanatory_labs.pkl'):
-    '''Condense TK and format explanatory and response variable inputs for assumption testing.'''
+                              filepath_demo: str='../intermediates/explanatory_demo.pkl'):
+    '''Per `lifelines` requirements, condense?TK and format explanatory and response variable inputs for assumption testing.'''
 
     print('Formatting data in preparation for assumption diagnostics...')
-
-    # Resolve the relative paths
-    filepath_dx, filepath_meds, filepath_demo, filepath_labs = resolve_path('../intermediates/only_GBM_dx_dates.pkl'), resolve_path('../intermediates/explanatory_drugs.pkl'), resolve_path('../intermediates/explanatory_demo.pkl'), resolve_path('../intermediates/explanatory_labs.pkl')
 
     # Load and deserialize diagnoses DataFrame
     rows_GBM = pd.read_pickle(resolve_path(filepath_dx))
@@ -47,11 +35,10 @@ def format_4_assumption_tests(filepath_dx: str='../intermediates/only_GBM_dx_dat
     # Load and deserialize demographics DataFrame
     demo_info = pd.read_pickle(resolve_path(filepath_demo))
 
-    # Load and deserialize laboratory tests DataFrame
-    # lab_data = pd.read_pickle(filepath_labs)
-
     '''Method 1: Simply removing missing demographic information'''
+    print(f'Number of rows in demo:\t{len(demo_info)}')
     demo_info = demo_info.dropna()
+    print(f'Number of rows in demo after dropping nulls:\t{len(demo_info)}')
     # TK fill in lab_data stuff
 
     # Set-intersect indices to get common patients between drugs and diagnostic datasets
@@ -66,15 +53,24 @@ def format_4_assumption_tests(filepath_dx: str='../intermediates/only_GBM_dx_dat
     med_hist = med_hist.loc[common_index]
     demo_info = demo_info.loc[common_index]
 
-    # Filter out features not satisfying the rule of 10
-
     # One-hot encode all the categorical variables
     demo_info_t = OneHotEncoder().fit_transform(X=demo_info)
 
-    # Concatenate encoded DataFrames into explanatory DataFrame
-    data_x = pd.concat([med_hist, demo_info_t], axis='columns', join='outer')
+    # Concatenate demographic and drug DataFrames into explanatory DataFrame
+    data_x = pd.concat(
+        [med_hist, demo_info_t, rows_GBM['Age_at_Time_of_Diagnosis']], axis='columns', join='outer')
 
-    # TK add a filter here filtering out the columns without at least 10% observations/patients
+    # Exclude features with low variance (according to `lifelines` fitting warnings)
+    data_x = data_x.drop(columns=['Order_Name=2599', 'Order_Name=317398'])
+    # RxCUI 2599 = clonidine transdermal patch
+    # RxCUI 317398 = lamotrigine 150 mg tablet
+
+    # Exclude medicational features without therapeutic effects
+    data_x = data_x.drop(columns=['Order_Name=dry mouth treatment',
+                                  'Order_Name=optichamber spacer device',
+                                  'Order_Name=saline nasal rinse kit',
+                                  'Order_Name=saliva substitute solution',
+                                  'Order_Name=skin test read order'])
 
     # The patients with no (i.e. missing) death-date by end-data-collection date are right-censored (`Status == False`)
     rows_GBM['Status'] = pd.isna(rows_GBM['Date_of_death'])
@@ -84,11 +80,9 @@ def format_4_assumption_tests(filepath_dx: str='../intermediates/only_GBM_dx_dat
         print(line)
         file.write(line)
     '''Link: "Five-year relative survival was lowest for glioblastoma (6.8%)" (PMID: 31675094)'''
-
     END_DX_DATE = pd.to_datetime('2022/01/13')  # Confirmed by BTRIS
     # Fill NAs in `Date_of_death` column with the end-data-collection date to get a survival duration anyways
     rows_GBM['Date_of_death'] = rows_GBM['Date_of_death'].fillna(END_DX_DATE)
-
     # Calculate duration between (1st) GBM diagnosis date and death/end-data-collection date
     rows_GBM['Survival_in_days'] = (rows_GBM['Date_of_death'] - \
         rows_GBM['Date_of_Diagnosis']).dt.days
@@ -101,11 +95,113 @@ def format_4_assumption_tests(filepath_dx: str='../intermediates/only_GBM_dx_dat
     return [data_x, rows_GBM[['Status', 'Survival_in_days']]]
 
 
+# Link: https://lifelines.readthedocs.io/en/latest/jupyter_notebooks/Cox%20residuals.html#Assessing-Cox-model-fit-using-residuals-(work-in-progress)
+def display_summary(data_x: pd.DataFrame,
+                    data_y: pd.DataFrame,
+                    alpha: float):
+
+    entire = pd.concat([data_y, data_x], axis='columns', join='outer')
+    entire = entire.astype(int)
+    cph = CoxPHFitter(penalizer=alpha, l1_ratio=0.9)
+    # Fit model
+    print('Fitting model...')
+    cph.fit(entire, duration_col='Survival_in_days')
+    print('Fitting model done.')
+    # Display summary
+    print('Displaying summary...')
+    # TK shows an extra table (below the one shown in the example) with ['cmp to', 'z', 'p', '-log2(p)']
+    cph.print_summary()
+    # Serialize summary
+    cph.summary.to_pickle(resolve_path('../results/summary.pkl'))
+    print('Displaying summary done.')
+    print('Plotting coefficients...')
+    cph.plot()
+    plt.show()
+    plt.savefig(resolve_path('../plots/coefficients.png'))
+    print('Plotting coefficients done.')
+
+    return cph
+
+
+# Link: https://lifelines.readthedocs.io/en/latest/jupyter_notebooks/Proportional%20hazard%20assumption.html
+def validate_hazard_proportionality(data_x: pd.DataFrame,
+                                    data_y: pd.DataFrame,
+                                    fitted_cph):
+    '''Computes statistics and generates plots that are used to check the hazard proportionality assumption, printing everything along with some advice (to correct for non-proportionality).'''
+
+    print('\n\nChecking proportionality of hazards requirement...')
+
+    entire = pd.concat([data_y, data_x], axis='columns', join='outer')
+
+    # Summary of the data
+    fitted_cph.print_summary(model="untransformed variables", decimals=3)
+    fitted_cph.check_assumptions(entire, p_value_threshold=0.05, show_plots=True)
+
+    # Compute residuals
+    scaled_schoenfeld_residuals = fitted_cph.compute_residuals(
+        training_DataFrame=entire, kind='scaled_schoenfeld')
+    scaled_schoenfeld_residuals.to_csv(
+        resolve_path('../results/sclschresid.csv'))
+
+    print(scaled_schoenfeld_residuals)
+
+    print('Checking proportionality of hazards requirement done.\n\n')
+
+
+# From: https://lifelines.readthedocs.io/en/latest/jupyter_notebooks/Cox%20residuals.html#Deviance-residuals
+def examine_outliers(data_x: pd.DataFrame,
+                     data_y: pd.DataFrame,
+                     fitted_cph):
+
+    print('\n\nExamining outliers...')
+
+    entire = pd.concat([data_y, data_x], axis='columns', join='outer')
+
+    r = fitted_cph.compute_residuals(entire, 'deviance')
+    r.head()
+    r.plot.scatter(
+        x='Survival_in_days', y='deviance', alpha=0.75,
+        c=np.where(r['arrest'], '#008fd5', '#fc4f30')
+    )
+
+    r = r.join(entire.drop(['Survival_in_days', 'arrest'], axis='columns'))
+    plt.scatter(r['prio'], r['deviance'], color=np.where(
+        r['arrest'], '#008fd5', '#fc4f30'))
+    r = fitted_cph.compute_residuals(entire, 'delta_beta')
+    r.head()
+    r = r.join(entire[['Survival_in_days', 'arrest']])
+    r.head()
+    plt.scatter(r['Survival_in_days'], r['prio'], color=np.where(
+        r['arrest'], '#008fd5', '#fc4f30'))
+    plt.show()
+
+    print('Examining outliers done.\n\n')
+
+
+# From: https://lifelines.readthedocs.io/en/latest/jupyter_notebooks/Cox%20residuals.html#Martingale-residuals
+def detect_nonlinearity(data_x: pd.DataFrame,
+                        data_y: pd.DataFrame,
+                        fitted_cph):
+
+    print('\n\nDetecting nonlinearity...')
+
+    entire = pd.concat([data_y, data_x], axis='columns', join='outer')
+
+    r = fitted_cph.compute_residuals(entire, 'martingale')
+    r.head()
+    r.plot.scatter(
+        x='Survival_in_days', y='martingale', alpha=0.75,
+        c=np.where(r['arrest'], '#008fd5', '#fc4f30')
+    )
+
+    print('Detecting nonlinearity done.\n\n')
+
+
 # ==============================================================================
 
 
 def format_4_surv_analysis(data_x: pd.DataFrame, rows_GBM: pd.DataFrame):
-    '''Convert the dependent variables into a structured array with [`Status`, `Survival_in_days`] as fields. TK i converted this too early (TK did i?) (assumption diagnostics work better with un-converted DataFrames than structured arrays)'''
+    '''Per `sksurv` requirements, convert the dependent variables into a structured array with [`Status`, `Survival_in_days`] as fields. TK i converted this too early (TK did i?) (assumption diagnostics work better with un-converted DataFrames than structured arrays)'''
     dtypes = np.dtype([('Status', '?'), ('Survival_in_days', '<f8')])
     data_y = np.array([tuple(value) for value in rows_GBM.values],
                       dtype=dtypes)
@@ -248,7 +344,7 @@ def save_concord_idx_vs_alphas_plot(filepath_cv_results: str='../results/cv_resu
     best_mean = mean[alphas[alphas == best_alpha].index[0]]
     # Label the vertical line
     ax.axvline(best_alpha, color='C1')
-    ax.text(x=best_alpha, y=0.383, s=f'$\\alpha$={best_alpha:.2f}', horizontalalignment='center', verticalalignment='top')
+    ax.text(x=best_alpha, y=0.383, s=f'$\\alpha$={best_alpha:.4f}', horizontalalignment='center', verticalalignment='top')
     # Label the horizontal line
     ax.axhline(best_mean, color='dimgrey')
     ax.text(x=0.001, y=best_mean, s=f'{best_mean:.2f}  ', verticalalignment='center', horizontalalignment='right')
@@ -272,32 +368,33 @@ def save_features_and_coeffs_plot(filepath_best_coefs: str ='../results/best_coe
 
     non_zero_coefs = best_coefs.query('coefficient != 0').copy()
 
-    print(non_zero_coefs.index)
     print(non_zero_coefs['coefficient'])
 
     # TK temporary measure to get drugs with more observations than less
     # larger_drugs_indices = non_zero_coefs.index.isin(mask_filtering_out_small_drugs())
     # non_zero_coefs = non_zero_coefs.loc[larger_drugs_indices]
 
+    # For human-readability, convert RxCUIs to pre-normalized drug names
     non_zero_coefs['feature_names'] = ''
     for feature_rxcui in non_zero_coefs.index:
         marked_4_interest = feature_rxcui.startswith('$$$')
-        name = recover_drug_name_else_return(feature_rxcui).replace('$$$', '').split(' ')[0]
+        name = ' '.join(recover_drug_name_else_return(
+            feature_rxcui).replace('$$$', '').split(' ')[0:4])
         non_zero_coefs.loc[feature_rxcui, 'feature_names'] = ('$$$' if marked_4_interest else '') + name if name != '' else feature_rxcui
 
-    coef_order = non_zero_coefs['coefficient'].sort_values(ascending=True).index  # TK THIS is what to sort
+    # Arrange the bars by the absolute value of the coefficients
+    coef_order = non_zero_coefs['coefficient'].abs().sort_values(ascending=True).index
 
     _, ax = plt.subplots(figsize=(10, 8))
     ordered_coefs = non_zero_coefs.loc[coef_order]
     ordered_coefs = ordered_coefs.reset_index().set_index('feature_names')
     ordered_coefs.plot.barh(ax=ax, legend=False)
-    # TK Note ascending=False when sorting earlier, and iloc[::-1] when selecting rows, in the line above
     ax.set_title('Features and their coefficients, sorted by coeff.')
     ax.set_ylabel('Feature')
     ax.set_xlabel('coefficient')
     ax.grid(True, axis='x')
     plt.tight_layout()
-    plt.savefig(resolve_path('../plots/features_and_coefs.png'))
+    plt.savefig(resolve_path('../plots/features_&_coefs.png'))
 
     print('Generating features and coefficients plot done.')
 
@@ -344,9 +441,16 @@ def save_prognosis_plot_for_specific_feature(level: str,
 
 
 # TK Run
+with open(resolve_path('../results/best_params.json'), 'r') as file:
+    best_alpha = json.loads(file.read())['coxnetsurvivalanalysis__alphas'][0]
+fitted_cph = display_summary(*format_4_assumption_tests(), alpha=best_alpha)
+validate_hazard_proportionality(*format_4_assumption_tests(), fitted_cph)
+# examine_outliers(*format_4_assumption_tests(), fitted_cph)
+# detect_nonlinearity(*format_4_assumption_tests(), fitted_cph)
+
 # save_coefficients_vs_alpha_plot(*format_4_surv_analysis(*format_4_assumption_tests()))
 # choose_penalty_strength(*format_4_surv_analysis(*format_4_assumption_tests()))
-save_concord_idx_vs_alphas_plot()
-save_features_and_coeffs_plot()
+# save_concord_idx_vs_alphas_plot()
+# save_features_and_coeffs_plot()
 #save_prognosis_plot_for_specific_feature(level='')
 

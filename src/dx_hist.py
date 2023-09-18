@@ -217,7 +217,8 @@ def deduplicate_gbm_dx(df: pd.DataFrame):
 
         # GBM == GARD2491 TK include other codes?
         filter_result = rows_GBM[rows_GBM['gbm_dx_marker'] |
-                       (rows_GBM['ICD if Available'] == '2491')]
+                                (rows_GBM['ICD if Available'] == '2491') |
+                                (rows_GBM['ICD if Available'] == '6512')]
 
         print(f'Total Rows in this D.F.:\t{len(rows_GBM)}\nRows recording GBM diagnosis:\t{len(filter_result)}\nSubjects with GBM diagnosis:\t{len(filter_result.drop_duplicates(subset="Subject"))}')
 
@@ -232,9 +233,9 @@ def deduplicate_gbm_dx(df: pd.DataFrame):
     # For clarity, rename `Date` column
     rows_GBM = rows_GBM.rename(columns={'Date': 'Date_of_Diagnosis'})
 
-    # De-space/Remove spaces in column names (so they won't get affected by `split(' ')` later on)
+    # De-space `Age at Time of Diagnosis` column name (so they won't get affected by `split(' ')` later on)
     rows_GBM = rows_GBM.rename(
-        columns={col: col.replace(' ', '_') for col in rows_GBM.columns})
+        columns={'Age at Time of Diagnosis': 'Age_at_Time_of_Diagnosis'})
 
     # Sort by date (ascending), so earliest GBM diagnosis date comes first
     rows_GBM = rows_GBM.sort_values(by='Date_of_Diagnosis', ascending=True)
