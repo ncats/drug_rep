@@ -1,0 +1,39 @@
+Covariates:
+- BMI (within 2 months before and 1 month after cancer diagnosis date)
+	- restricted cubic spline functions with four knots
+- non-cancer Charlson index (before or within 30 days after the date of cancer diagnosis)
+	- restricted cubic spline functions with four knots
+- tumor location (first incident tumor only) (i.e. lobes or multiple or other)
+- tumor resection degree: gross total resection (GTR) vs other surgery (incl. subtotal/partial resection)
+- yes radiotherapy?
+- diagnosis period (pre-2004 vs post-2004)
+
+TK Can we determine these:
+- epilepsy
+- recurrent resection
+
+
+
+Imputation:
+- shouldn't we impute when we have all Subjects which have GBM diagnosis?
+
+
+
+
+
+Figures:
+- Consort diagrams
+- characteristic tables
+
+
+Code:
+- add 'validate' parameter to pandas functions
+
+
+
+- what is the radiotherapy called? (e.g. ICD). i can't seem to find it in Procedures of Dx data
+- since i can see "ventricular" stuff can i see "subventricular" stuff and include that as covariate? maybe the keywords are the hyponyms of subventricular procedures (i.e. search those up!)
+
+
+
+- put all imputation (and nullity-encoding) into final (i.e. surv_analysis.py) code

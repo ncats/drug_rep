@@ -1,0 +1,87 @@
+,n,num,den,numlog,denlog,num0,den0
+8,arbitrary units per milliliter,arbitrary units,milliliter,0,-3,arbitrary unit,liter
+11,cu mcron,cu mcron,,0,0,cu mcron,
+9,complement activity enzyme units,complement activity enzyme units,,0,0,complement activity enzyme unit,
+10,complement hemolytic 50 units,complement hemolytic 50 units,,0,0,complement hemolytic 50 unit,
+31,concentration in powers of 10,concentration in powers of 10,,0,0,concentration in power of 10,
+12,copies per milliliter,copies,milliliter,0,-3,copies,liter
+1,count,count,,0,0,count,
+13,degrees celsius,degrees celsius,,0,0,degree celsius,
+15,elisa units,elisa units,,0,0,elia unit,
+16,ehrlich units per deciliter,ehrlich units,deciliter,0,-1,ehrlich unit,liter
+71,femtoliters,femtoliters,,-15,0,liter,
+17,grams per 100 milliliters,grams,100 milliliters,0,-3,gram,100 liter
+18,grams per 24 hours,grams,24 hours,0,0,gram,24 hour
+19,grams per deciliter,grams,deciliter,0,-1,gram,liter
+74,hours,hours,,0,0,hour,
+20,igg phospholipid units,igg phospholipid units,,0,0,igg phopholipid unit,
+47,igm phospholipid units,igm phospholipid units,,0,0,igm phopholipid unit,
+26,index,index,,0,0,index,
+27,index value,index value,,0,0,index value,
+21,international units,international units,,0,0,international unit,
+24,international units per deciliter,international units,deciliter,0,-1,international unit,liter
+22,international units per liter,international units,liter,0,0,international unit,liter
+23,international units per milliliter,international units,milliliter,0,-3,international unit,liter
+32,international units per milliliter in powers of 10,international units,milliliter in powers of 10,0,-3,international unit,liter in power of 10
+77,kilodalton,kilodalton,,3,0,dalton,
+120,microequivalents per liter,microequivalents,liter,-6,0,equivalent,liter
+63,micrograms per 100 milliliters,micrograms,100 milliliters,-6,-3,gram,100 liter
+86,micrograms per 24 hours,micrograms,24 hours,-6,0,gram,24 hour
+64,micrograms per deciliter,micrograms,deciliter,-6,-1,gram,liter
+89,micrograms per gram,micrograms,gram,-6,0,gram,gram
+65,micrograms per liter,micrograms,liter,-6,0,gram,liter
+35,micrograms per milliliter,micrograms,milliliter,-6,-3,gram,liter
+91,micrograms per milliliter fibrinogen equivalent units,micrograms,milliliter fibrinogen equivalent units,-6,-3,gram,liter fibrinogen equivalent unit
+126,micrograms per milliliter of fibrinogen equivalent units,micrograms,milliliter of fibrinogen equivalent units,-6,-3,gram,liter of fibrinogen equivalent unit
+127,micrograms per minute,micrograms,minute,-6,0,gram,minute
+66,microinternational units per milliliter,microinternational units,milliliter,-6,-3,international unit,liter
+68,microliters,microliters,,-6,0,liter,
+93,micromoles per liter,micromoles,liter,-6,0,mole,liter
+69,micromoles per mole,micromoles,mole,-6,0,mole,mole
+130,microunits per milliliter,microunits,milliliter,-6,-3,unit,liter
+85,microunits per milliliter ,microunits,milliliter,-6,-3,unit,liter
+36,milliequivalents per liter,milliequivalents,liter,-3,0,equivalent,liter
+37,milligrams per 100 milliliters,milligrams,100 milliliters,-3,-3,gram,100 liter
+38,milligrams per 24 hours,milligrams,24 hours,-3,0,gram,24 hour
+39,milligrams per deciliter,milligrams,deciliter,-3,-1,gram,liter
+97,milligrams per gram,milligrams,gram,-3,0,gram,gram
+40,milligrams per liter,milligrams,liter,-3,0,gram,liter
+98,milligrams per milligram,milligrams,milligram,-3,-3,gram,gram
+79,milliinternational units per milliliter,milliinternational units,milliliter,-3,-3,international unit,liter
+42,milliliters,milliliters,,-3,0,liter,
+81,milliliters per deciliter,milliliters,deciliter,-3,-1,liter,liter
+43,milliliters per minute,milliliters,minute,-3,0,liter,minute
+101,millimeters,millimeters,,-3,0,meter,
+104,millimeters of mercury,millimeters of mercury,,-3,0,meter of mercury,
+44,millimeters per hour,millimeters,hour,-3,0,meter,hour
+45,millimoles per 24 hours,millimoles,24 hours,-3,0,mole,24 hour
+46,millimoles per liter,millimoles,liter,-3,0,mole,liter
+41,millions per cubic millimeter,millions,cubic millimeter,6,-3,,cubic meter
+33,millions per microliter,millions,microliter,6,-6,,liter
+83,milliosmoles per kilogram,milliosmoles,kilogram,-3,3,osmole,gram
+48,nanograms per 100 milliliters,nanograms,100 milliliters,-9,-3,gram,100 liter
+0,nanograms per deciliter,nanograms,deciliter,-9,-1,gram,liter
+107,nanograms per deciliter per hour,nanograms,deciliter per hour,-9,-1,gram,liter per hour
+50,nanograms per milliliter,nanograms,milliliter,-9,-3,gram,liter
+110,nanometers,nanometers,,-9,0,meter,
+111,nanomoles per liter,nanomoles,liter,-9,0,mole,liter
+112,nanomoles per milliliter,nanomoles,milliliter,-9,-3,mole,liter
+3,per 100 white blood count,,100 white blood count,0,0,,100 white blood count
+4,per cubic millimeter,,cubic millimeter,0,-3,,cubic meter
+5,per microliter,,microliter,0,-6,,liter
+2,percent,,cent,0,0,,cent
+70,picograms,picograms,,-12,0,gram,
+114,picograms per deciliter,picograms,deciliter,-12,-1,gram,liter
+52,picograms per milliliter,picograms,milliliter,-12,-3,gram,liter
+53,ratio,ratio,,0,0,ratio,
+54,seconds,seconds,,0,0,second,
+55,somogyi unit,somogyi unit,,0,0,somogyi unit,
+56,thousands per cubic millimeter,thousands,cubic millimeter,3,-3,,cubic meter
+28,thousands per microliter,thousands,microliter,3,-6,,liter
+59,threshold,threshold,,0,0,threhold,
+58,thyroid stimulating immunoglobulin index,thyroid stimulating immunoglobulin index,,0,0,thyroid stimulating immunoglobulin index,
+57,titer,titer,,0,0,titer,
+60,units,units,,0,0,unit,
+61,units per liter,units,liter,0,0,unit,liter
+62,units per milliliter,units,milliliter,0,-3,unit,liter
+82,ml/min/1.73m²,ml/min/1.73m²,,0,0,ml/min/1.73m²,

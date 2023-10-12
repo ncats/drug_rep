@@ -1,0 +1,241 @@
+
+
+
+How to solve "error: Microsoft Visual C++ 14.0 or greater is required" when installing Python packages?
+https://stackoverflow.com/a/64262038
+
+
+
+How do I access updated Python 3.9 in VS Code via command line?
+https://stackoverflow.com/a/67249209
+In VS Code on Windows, when you launch a terminal window from the IDE, it will activate the interpreter/environment you've chosen for your project (typically by CTRL-SHIFT-P and then Python: Select Interpreter). I've noticed on Linux that it will not do this (and this may also be the case on macOS), so if I want to use a specific version or environment, I need to specify it or activate it as my first command in the terminal with something like conda activate myenvname.
+
+
+How to install python library in VSCode and how to import them?
+https://stackoverflow.com/a/61063912
+Select the virtual env (bottom left corner of VS Code) and open a terminal with VS Code. Make sure the script activate from the virtual env is executed (your terminal should append (.venv) notation)
+
+Can't install scispacy on Windows - nmslib build fails
+https://github.com/allenai/scispacy/issues/291#issuecomment-771076466
+Currently, nmslib only supports python < 3.9. I've tried 3.9, 3.91, and 3.85. Only 3.85 worked...Once I had Python 3.85 64-bit (nmslib does not support 32-bit - atleast on windows) - nmslib installed fine. I then installed scispacy and it seems to be working right.
+
+Installing specific package version with pip
+https://stackoverflow.com/a/5226504
+pip install --force-reinstall -v
+For example: pip install --force-reinstall -v "MySQL_python==1.2.2"
+> In my case it was pip install --force-reinstall -v "spacy[cuda113]==3.4.4(?????)"
+
+
+import langchain => Error : TypeError: issubclass() arg 1 must be a class
+https://stackoverflow.com/a/76314471
+typing-inspect==0.8.0 typing_extensions==4.5.0
+
+
+$ pip list
+Package             Version
+------------------- --------
+blis                0.7.9   
+catalogue           2.0.8   
+certifi             2023.5.7
+charset-normalizer  3.2.0   
+click               8.1.5   
+colorama            0.4.6   
+confection          0.1.0   
+conllu              4.5.3   
+contourpy           1.1.0   
+cupy-cuda113        10.6.0  
+cycler              0.11.0  
+cymem               2.0.7   
+en-core-sci-scibert 0.5.1   
+fastrlock           0.8.1   
+filelock            3.12.2  
+fonttools           4.41.0  
+fsspec              2023.6.0
+huggingface-hub     0.16.4  
+idna                3.4     
+importlib-resources 6.0.0
+Jinja2              3.1.2
+joblib              1.3.1
+kiwisolver          1.4.4
+langcodes           3.3.0
+MarkupSafe          2.1.3
+matplotlib          3.7.2
+mpmath              1.3.0
+murmurhash          1.0.9
+mypy-extensions     1.0.0
+networkx            3.1
+nmslib              2.1.1
+numpy               1.24.4
+packaging           23.1
+pandas              2.0.3
+pathy               0.10.2
+Pillow              10.0.0
+pip                 23.2
+preshed             3.0.8
+psutil              5.9.5
+pybind11            2.6.1
+pydantic            1.9.2
+pyparsing           3.0.9
+pysbd               0.3.4
+python-dateutil     2.8.2
+pytz                2023.3
+PyYAML              6.0
+regex               2023.6.3
+requests            2.31.0
+scikit-learn        1.3.0
+scipy               1.10.1
+scispacy            0.5.2
+seaborn             0.12.2
+setuptools          68.0.0
+six                 1.16.0
+smart-open          6.3.0
+spacy               3.4.4
+spacy-alignments    0.9.0
+spacy-legacy        3.0.12
+spacy-loggers       1.0.4
+spacy-transformers  1.2.1
+srsly               2.4.6
+sympy               1.12
+thinc               8.1.10
+threadpoolctl       3.2.0
+tokenizers          0.13.3
+torch               2.0.1
+tqdm                4.65.0
+transformers        4.26.1
+typer               0.4.2
+typing_extensions   4.5.0
+typing-inspect      0.8.0
+tzdata              2023.3
+urllib3             2.0.3
+wasabi              0.10.1
+zipp                3.16.2
+
+
+"Trying to unpickle estimator LinearRegression from version X when using version Y" - But I have only the Y version on my .venv, what takes?
+https://stackoverflow.com/a/72493664
+In my case, I tried to resolve the following warning message
+/home/partha/anaconda3/lib/python3.7/site-packages/sklearn/base.py:334: 
+UserWarning: Trying to unpickle estimator LinearRegression from version 1.1.1 
+when using version 0.23.2. This might lead to breaking code or invalid results. 
+Use at your own risk.
+  UserWarning)
+with pip install scikit-learn==1.1.1
+> In my case i got "Trying to unpickle estimator TfidfVectorizer from version 1.1.2 when using version 1.3.0" (i.e. at this point scikit-learn was 1.3.0; target version is 1.1.2)
+> So i pip install --force-reinstall "scikit-learn==1.1.2"
+
+
+
+$ pip list
+Package             Version
+------------------- --------
+blis                0.7.9
+catalogue           2.0.8
+certifi             2023.5.7
+charset-normalizer  3.2.0
+click               8.1.5
+colorama            0.4.6
+confection          0.1.0
+conllu              4.5.3
+contourpy           1.1.0
+cupy-cuda113        10.6.0
+cycler              0.11.0
+cymem               2.0.7
+en-core-sci-scibert 0.5.1
+fastrlock           0.8.1
+filelock            3.12.2
+fonttools           4.41.0
+fsspec              2023.6.0
+huggingface-hub     0.16.4
+idna                3.4
+importlib-resources 6.0.0
+Jinja2              3.1.2
+joblib              1.3.1
+kiwisolver          1.4.4
+langcodes           3.3.0
+MarkupSafe          2.1.3
+matplotlib          3.7.2
+mpmath              1.3.0
+murmurhash          1.0.9
+mypy-extensions     1.0.0
+networkx            3.1
+nmslib              2.1.1
+numpy               1.24.4
+packaging           23.1
+pandas              2.0.3
+pathy               0.10.2
+Pillow              10.0.0
+pip                 23.2
+preshed             3.0.8
+psutil              5.9.5
+pybind11            2.6.1
+pydantic            1.9.2
+pyparsing           3.0.9
+pysbd               0.3.4
+python-dateutil     2.8.2
+pytz                2023.3
+PyYAML              6.0
+regex               2023.6.3
+requests            2.31.0
+scikit-learn        1.1.2
+scipy               1.10.1
+scispacy            0.5.2
+seaborn             0.12.2
+setuptools          68.0.0
+six                 1.16.0
+smart-open          6.3.0
+spacy               3.4.4
+spacy-alignments    0.9.0
+spacy-legacy        3.0.12
+spacy-loggers       1.0.4
+spacy-transformers  1.2.1
+srsly               2.4.6
+sympy               1.12
+thinc               8.1.10
+threadpoolctl       3.2.0
+tokenizers          0.13.3
+torch               2.0.1
+tqdm                4.65.0
+transformers        4.26.1
+typer               0.4.2
+typing_extensions   4.5.0
+typing-inspect      0.8.0
+tzdata              2023.3
+urllib3             2.0.3
+wasabi              0.10.1
+zipp                3.16.2
+
+
+UserWarning: CUDA path could not be detected. Set CUDA_PATH environment variable if CuPy fails to load.
+https://docs.nvidia.com/cuda/cuda-quick-start-guide/index.html#pip-wheels-windows
+python -m pip install --upgrade setuptools pip wheel
+python -m pip install --use-pep517 nvidia-pyindex  # the PEP517 flag was on suggestion of an error after running command w/o flag
+Abandoned: https://github.com/NVIDIA/tensorflow/issues/10#issuecomment-844484145
+
+https://docs.nvidia.com/cuda/cuda-quick-start-guide/index.html#network-installer
+
+command 'X:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.36.32532\\bin\\HostX86\\x64\\cl.exe' failed with exit code 2
+
+CuPy only compatible up to CUDA 12.1.
+Solution was to install CUDA 12.1
+
+You are trying to build CuPy from source, which is NOT recommended for general use.
+Please consider using binary packages instead.
+https://docs.cupy.dev/en/stable/install.html
+python -m pip install -U setuptools pip
+pip install cupy-cuda12x
+
+When importing CuPy, CUDA_PATH was required (which i already set).
+Solution was to just restart the computer.
+
+AssertionError: Torch not compiled with CUDA enabled
+https://pytorch.org/get-started/locally/
+Didn't want to reinstall a lower version of CUDA, so: pip3 install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu121
+
+UserWarning: Failed to auto-detect cl.exe path: <class 'distutils.errors.DistutilsPlatformError'>: Microsoft Visual C++ directory not found
+  warnings.warn(f'Failed to auto-detect cl.exe path: {type(e)}: {e}')
+1. Use paths without spaces: \NVIDIA GPU Computing Toolkit -> \NVIDIAGPUComputingToolkit
+2. Set the NVCC environment variable: NVCC=X:\Program Files\NVIDIAGPUComputingToolkit\CUDA\v12.1\bin\
+
+C:\Users\Admin_Calvin>"X:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.36.32532\bin\Hostx86\x64\cl.exe"
+Microsoft (R) C/C++ Optimizing Compiler Version 19.36.32537 for x64
+

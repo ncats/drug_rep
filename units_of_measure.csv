@@ -1,0 +1,132 @@
+Complement Activity Enzyme Units,Full_Name,,Example
+ ng/dL,Nanograms per deciliter,pg/dL,70393
+#,Count,,Interf.Gam.Rpt. M.C. (Blood)
+%,Per cent,,NK Cells % (Blood)
+/100 WBC,Per 100 white blood count,,Nucleated RBC % (Blood)
+/MM3,Per cubic millimeter,,RBC Count (CSF)
+/mcL,Per microliter,,WBC (Urinalysis)
+/mm3,Per cubic millimeter,,WBC Count (CSF)
+/uL,Per microliter,,NK Cells # (Blood)
+AU/mL,Arbitrary Units per Milliliter,,Cytomegalovirus (CMV) Ab IgM (Blood)
+CAE Units,Complement Activity Enzyme Units,,Complement Total (Blood)
+CH50 U,Complement Hemolytic 50 Units,,Complement Total (Blood)
+CU MCRON,CU MCRON,apparently incorrect,MCV (Blood)
+Copies/mL,Copies per milliliter,,HBV (HepB) DNA Quantification (Copies/mL) (Blood)
+DEGREE C,Degrees Celsius,,"Temperature, Arterial (Blood)"
+Degree C,Degrees Celsius,,"Temperature, Arterial, POCT (Blood)"
+EU,ELISA Units,,Antinuclear Antibody (ANA) (Blood)
+EU/dL,Ehrlich Units per deciliter,,Urobilinogen (Urinalysis)
+G/100ML,Grams per 100 milliliters,,Albumin (Blood)
+G/24HR,Grams per 24 hours,,"Creatinine Excretion, 24 hr (Urine)"
+G/DL,Grams per deciliter,,Albumin (Blood)
+GPL,IgG phospholipid units,,Anti-Cardiolipin IgG Quant (Blood)
+IU,International Units,,DNA Double-Stranded Ab (Blood)
+IU/L,International Units per liter,,Beta HCG Pregnancy (Blood)
+IU/ML,International Units per milliliter,,HBV (HepB) DNA Quantification (IU/mL) (Blood)
+IU/dL,International Units per deciliter,,"vWf Activity, Manual (Blood)"
+IU/mL,International Units per milliliter,,Anti Xa Unfractionated Heparin (Blood)
+Index,Index,,Aspergillus Antigen (Blood)
+Index Value,Index Value,,Anti-Thyroid Peroxidase (Blood)
+K/UL,Thousands per microliter,,Neutrophil Abs (Blood)
+K/mcL,Thousands per microliter,,Basophil Abs (Blood)
+K/uL,Thousands per microliter,,Nucleated RBC Abs (Blood)
+Log 10,Concentration in powers of 10,,Human Herpesvirus 6 (HHV-6) PCR Log10 (Blood)
+Log10 IU/mL,International Units per milliliter in powers of 10,,Cytomegalovirus (CMV) PCR Log10 (Blood)
+M/mcL,Millions per microliter,,RBC (Blood)
+M/uL,Millions per microliter,,RBC (Blood)
+MCG/ML,Micrograms per milliliter,,Oxacillin Sensitivity
+MEQ/L,Milliequivalents per liter,,Magnesium (Blood)
+MG/100ML,Milligrams per 100 milliliters,,Bilirubin Direct (Blood)
+MG/24HR,Milligrams per 24 hours,,Hydroxyproline (Urine)
+MG/DL,Milligrams per deciliter,,"Creatinine, Timed or Random (Urine)"
+MG/L,Milligrams per liter,,Ceruloplasmin (Blood)
+MILL/MM3,Millions per cubic millimeter,,RBC (Blood)
+ML,Milliliters,,Volume (Urine)
+ML/MIN,Milliliters per minute,,Creatinine Clearance (Urine)
+MM/HR,Millimeters per hour,,ESR (Blood)
+MMOL/24H,Millimoles per 24 hours,,"Calcium Excretion, 24 hr (Urine)"
+MMOL/L,Millimoles per liter,,Potassium (Blood)
+MPL,IgM phospholipid units,,Anti-Cardiolipin IgM Quant (Blood)
+NG/100ML,Nanograms per 100 milliliters,,T4 Free (Blood)
+NG/DL,Nanograms per deciliter,,T3 (Blood)
+NG/ML,Nanograms per milliliter,,Vitamin D 25-OH (Blood)
+PERCENT,Per cent,,Hematocrit (Blood)
+PG/ML,Picograms per milliliter,,"Vitamin D 1, 25-Dihydroxy (Blood)"
+Ratio,Ratio,,T4/T8 Ratio (Blood)
+SECONDS,Seconds,,PT (Blood)
+SMOGYI U,Somogyi unit,,Amylase (Blood)
+THOU/MM3,Thousands per cubic millimeter,,Platelet Count (Blood)
+TITER,Titer,,Cytomegalovirus (CMV) Ab IgG (Blood)
+TSI index,Thyroid Stimulating Immunoglobulin index,,Thyroid Stimulating Immunoglobulin (TSI) (Blood)
+Threshold,Threshold,,Toxoplasma Ab IgM (Blood)
+U,Units,,Anti-Mitochondrial Ab (M2) (Blood)
+U/L,Units per liter,,Lactate Dehydrogenase (LDH) (Blood)
+U/mL,Units per milliliter,,Anti-Dnase B (Blood)
+UG/100ML,Micrograms per 100 milliliters,,T4 (Blood)
+UG/DL,Micrograms per deciliter,,Iron (Blood)
+UG/L,Micrograms per liter,,Osteocalcin (Blood)
+UI.U/ML,Microinternational Units per milliliter,,TSH (Blood)
+UIU/ML,Microinternational Units per milliliter,,TSH (Blood)
+UL,Microliters,,CD3 # (Blood)
+UMOL/MOL,Micromoles per mole,,Deoxypyridinoline (Urine)
+UUG,Picograms,,MCH (Blood)
+fL,Femtoliters,,MPV (Blood)
+g/24h,Grams per 24 hours,,"Creatinine Excretion, 24 hr (Urine)"
+g/dL,Grams per deciliter,,Hemoglobin (Blood)
+h,Hours,,Coll. Duration [Order:  timed tests] (Urine)
+hr,Hours,,Coll. Duration [Order:  Metaneph. Fract.] (Urine)
+index,Index,,Aspergillus Antigen (BAL)
+kDa,Kilodalton,,Lyme Ab IgM Bands Detected (Blood)
+mEq/L,Milliequivalents per liter,,"Free Fatty Acids, Total (Blood)"
+mIU/mL,Milliinternational Units per milliliter,,Erythropoietin (Blood)
+mL,Milliliters,,Volume [Order: timed tests] (Urine)
+mL/dL,Milliliters per deciliter,,"O2 Capacity, Arterial, CCMD (Blood)"
+mL/min/1.73m2,mL/min/1.73m²,,"eGFR, IR POCT (Blood)"
+mOsm/kg,Milliosmoles per kilogram,,"Osmolality, Serum (Blood)"
+mcIU/mL,Microinternational Units per milliliter,,TSH (Blood)
+mcU/mL,Microunits per milliliter ,insulin only,Insulin (Blood)
+mcg/24 h,Micrograms per 24 hours,,"Norepinephrine, 24 hr (Urine)"
+mcg/L,Micrograms per liter,,Ferritin (Blood)
+mcg/dL,Micrograms per deciliter,,Retinol (Vitamin A) (Blood)
+mcg/g,Micrograms per gram,,Pancreatic Elastase 1 (Feces)
+mcg/mL,Micrograms per milliliter,,IGF Binding Prot.-3 (Blood)
+mcg/mL FEU,Micrograms per milliliter fibrinogen equivalent units,,D-Dimer (Blood)
+mcg/ml,Micrograms per milliliter,,Nitrofurantoin Sensitivity
+mcmol/L,Micromoles per liter,,Methotrexate (Blood)
+mg/24h,Milligrams per 24 hours,,"Protein Excretion, 24 hr (Urine)"
+mg/L,Milligrams per liter,,Albumin (Urine)
+mg/dL,Milligrams per deciliter,,"Protein, Quant. (Urine)"
+mg/g,Milligrams per gram,,Albumin/Creatinine Ratio (Urine)
+mg/mg,Milligrams per milligram,,Protein/Creatinine Ratio (Urine)
+micro u/mL,Microunits per milliliter ,,"Renin, Direct (Blood)"
+ml/min,Milliliters per minute,,Creatinine Clearance (Urine)
+mm,Millimeters,,Meropenem Sensitivity
+mm/h,Millimeters per hour,,ESR (Blood)
+mm/hr,Millimeters per hour,,ESR (Blood)
+mmHg,Millimeters of mercury,,"pO2, Arterial (Blood)"
+mmol/L,Millimoles per liter,,"HCO3, Arterial  (Blood)"
+ng/dL,Nanograms per deciliter,,T4 Free (Blood)
+ng/dL/h,Nanograms per deciliter per hour,,"Renin Activity, Plasma (Blood)"
+ng/mL,Nanograms per milliliter,,RBC Folate (Blood)
+ng/ml,Nanograms per milliliter,,Alpha-fetoprotein (AFP) (Blood)
+nm,Nanometers,,Lipoprotein: LDL Size (Blood)
+nmol/L,Nanomoles per liter,,Lipoprotein: LDL Particle Number (Blood)
+nmol/mL,Nanomoles per milliliter,,Methylmalonic Acid (Blood)
+pg,Picograms,,MCH (Blood)
+pg/dL,Picograms per deciliter,,T3 Free (Blood)
+pg/mL,Picograms per milliliter,,Vitamin B12 (Blood)
+ratio,Ratio,,Albumin Quotient (CSF)
+sec,Seconds,,PTT (Blood)
+threshold,Threshold,,Toxoplasma IgM Threshold Value (Blood)
+titer,Titer,,Syphilis Rapid Plasma Reagin (RPR) Quantitative (Blood)
+uEq/L,Microequivalents per liter,,"Free Fatty Acids, Total (Blood)"
+uIU/mL,Microinternational Units per milliliter,,TSH (Blood)
+ug/24h,Micrograms per 24 hours,,"Cortisol Excretion, 24 hr (Urine)"
+ug/L,Micrograms per liter,,Prolactin (Blood)
+ug/dL,Micrograms per deciliter,,Iron (Blood)
+ug/mL,Micrograms per milliliter,,T4 (Thyroxin) Binding Globulin (Blood)
+ug/mL FEU,Micrograms per milliliter of fibrinogen equivalent units,,D-Dimer (Blood)
+ug/min,Micrograms per minute,,"Albumin (or Microalb.) Excr. Rate, 24 hr (Urine)"
+umol/L,Micromoles per liter,,Gamma-Linolenic Acid (Blood)
+units,Units,,Cytomegalovirus (CMV) Ab IgG (Blood)
+uunit/mL,Microunits per milliliter,,Insulin Serial #004 (Blood)

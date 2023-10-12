@@ -3,17 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import to_rgb
 from scipy.stats import chisquare
-from util import resolve_path
-import os
-os.environ['R_HOME'] = 'C:/Program Files/R/R-4.2.2/'
-import rpy2.robjects as ro
-from rpy2.robjects.conversion import localconverter
-from rpy2.robjects import pandas2ri
-from rpy2.robjects.packages import importr
+from util import resolve_path, impute_multinominal, CSV_DIR
 
-FILEPATH_VITALS = 'C:/Users/Admin_Calvin/Microwave_Documents/NIH/data/Updated_All_Vital_Sign_Data_for_Glioblastoma_Subjects_sent_to_Zhu_1-18-2023.xlsx - All_Vital_Data.csv'
 
-def preprocess_demo_df(filepath: str=FILEPATH_VITALS) -> pd.DataFrame:
+FILENAME_VITALS = 'Updated_All_Vital_Sign_Data_for_Glioblastoma_Subjects_sent_to_Zhu_1-18-2023.xlsx - All_Vital_Data.csv'
+
+def preprocess_demo_df(filepath: str=CSV_DIR+FILENAME_VITALS) -> pd.DataFrame:
     '''Does not exit pipe. Does not modify structure (e.g. `set_index()`); that's done in `set_index_4_indep_demo_df()`.'''
 
     # Define available column types
@@ -67,6 +62,11 @@ def preprocess_demo_df(filepath: str=FILEPATH_VITALS) -> pd.DataFrame:
 
     # Filter rows so that `Subject`s are represented by unique rows
     return df.drop_duplicates(subset='Subject')
+    
+    
+    
+def get_recent_BMI(df: pd.DataFrame):
+    
 
 
 def set_index_4_indep_demo_df(df: pd.DataFrame):
@@ -83,48 +83,14 @@ def set_index_4_indep_demo_df(df: pd.DataFrame):
 # Standard pipeline (preprocess %>% set_index) (NO imputation)
 # set_index_4_indep_demo_df(preprocess_demo_df())
 
-
-def impute_multinominal_demo(df: pd.DataFrame,
-                             file_suffix: str):
-
-    # Select desired columns
-    df = df[['Subject', 'Gender', 'Race', 'Ethnicity']]
-
-    # Set index to `Subject` ID, to concatenate with similar DataFrames later
-    df = df.set_index('Subject')
-
-    # Import the R packages
-    missForest = importr('missForest')
-    pandas2ri.activate()
-
-    # Convert pandas DataFrame to R data.frame
-    try:
-        with localconverter(ro.default_converter + pandas2ri.converter):
-            r_data = ro.conversion.py2rpy(df)
-    except Exception as e:
-        print(f"Error converting pandas DataFrame to R data.frame: {e}")
-
-    # Apply missForest imputation
-    imputed_data_r = missForest.missForest(r_data)
-
-    # Convert the imputed R data.frame back to a pandas DataFrame
-    try:
-        with localconverter(ro.default_converter + pandas2ri.converter):
-            imputed_data = ro.conversion.py2rpy(imputed_data_r[0])
-    except Exception as e:
-        print(f"Error converting pandas DataFrame to R data.frame: {e}")
-
-    # Serialize the DataFrame
-    pd.DataFrame(imputed_data).to_pickle(resolve_path(
-        f'../intermediates/explanatory_demo_imputed{file_suffix}.pkl'))
+# -----
 
 # Standard pipeline (preprocess %>% impute) (YES imputation)
-
 # Multiple (5 times) imputation
 print('Performing multiple imputation...')
 df = preprocess_demo_df()
 for i in range(5):
-    impute_multinominal_demo(df, str(i))
+    impute_multinominal(df[['Subject', 'Gender', 'Race', 'Ethnicity']], str(i), 'explanatory_demo_imputed')
     print(f'Imputation {str(i)} done.')
 print('Performing multiple imputation done.')
 
@@ -319,7 +285,7 @@ def test_chisq_association(df: pd.DataFrame):
         genpop_df['genpop_counts'] = genpop_df['genpop_counts'].apply(lambda size: round(size * size_downscale))
 
         # Get the column representing the observed counts in the GBM data
-        GBM_df = (df.groupby(col, dropna=is_col_gender).size()
+        GBM_df = (df.groupby(col, dropna=is_col_gender, observed=False).size()
                 .reset_index(name='GBM_counts'))
 
         if not is_col_gender:

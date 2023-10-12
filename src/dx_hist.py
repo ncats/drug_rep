@@ -2,15 +2,15 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import re
-from util import resolve_path
+from util import resolve_path, CSV_DIR
 
-FILEPATH_DIAGNOSTICS = 'C:/Users/Admin_Calvin/Microwave_Documents/NIH/data/Updated_All_Dx_Data_For_Glioblastoma_Subjects_sent_to_Zhu_1-18-2022.xlsx - All_Diagnosis.csv'
+FILENAME_DIAGNOSTICS = 'Updated_All_Dx_Data_For_Glioblastoma_Subjects_sent_to_Zhu_1-18-2022.xlsx - All_Diagnosis.csv'
 
 from gensim.models.keyedvectors import KeyedVectors
 #BIO_WORD_VECS = KeyedVectors.load_word2vec_format('C:/Users/Admin_Calvin/Microwave_Documents/NIH/biowordvec/bio_embedding_intrinsic', binary=True)
 
 
-def preprocess_dx_df(filepath: str=FILEPATH_DIAGNOSTICS) -> pd.DataFrame:
+def preprocess_dx_df(filepath: str=CSV_DIR+FILENAME_DIAGNOSTICS) -> pd.DataFrame:
     '''Does not exit pipe.'''
 
     # Define available column types
@@ -104,7 +104,7 @@ def visualize_conditions_barplot(df: pd.DataFrame, n_included: int=20,
     df = df[df['Diagnosis Type'] != 'Procedure']
 
     # Sort bars by frequency of `ICD if Available` (imperfect)
-    conditions = df.groupby(by=['ICD if Available'], dropna=True).size().reset_index(name='counts').sort_values(by='counts', ascending=False)
+    conditions = df.groupby(by=['ICD if Available'], dropna=True, observed=False).size().reset_index(name='counts').sort_values(by='counts', ascending=False)
 
     # We are looking at CO-morbidities; filter out GARD==2491 (GBM) row
     conditions = conditions[conditions['ICD if Available'] != '2491']
@@ -185,12 +185,61 @@ def visualize_conditions_barplot(df: pd.DataFrame, n_included: int=20,
     # TK idk why the bars become not sorted descending anymore
 
 
+def remove_minors(df: pd.DataFrame):
+	
+
+'''TK are these 3 included in the charlson index????'''
+def indicate_diabetes_comorb(df: pd.DataFrame):
+	'E11' '250'
+
+
+def indicate_hypertension_comorb(df: pd.DataFrame):
+
+
+
+def indicate_epilepsy_comorb(df: pd.DataFrame):
+
+
+
+def indicate_recurrent_resection(df: pd.DataFrame):
+
+
+
+def get_Charlson_index(df: pd.DataFrame):
+	'''Non-brain tumor Charlson index, of course (to avoid overlapping covariates) TK'''
+
+
+
+def indicate_dx_period_cohort(df: pd.DataFrame):
+	'''There is a difference between the cohort of GBM patients treated pre-2004 vs. post-2004, post-2004 being the "temozolomide era", in which the relatively highly effective treatment regimen of temozolomide with concurrent radiotherapy became widespread. TK'''
+
+
+
+def get_tumor_location(df: pd.DataFrame):
+	'''First incident tumor only.  Location includes any or all of the four lobes, or another location.'''
+
+
+
+def indicate_tumor_laterality(df: pd.DataFrame):
+	'''First incident tumor only.'''
+
+
+
+def indicate_tumor_resection_degree(df: pd.DataFrame):
+	'''The two degrees are: gross total resection (GTR) or non-gross total resection (incl. subtotal resection, partial resection).'''
+	
+	
+	
+def indicate_radiotherapy(df: pd.DataFrame):
+
+
+
 
 def deduplicate_gbm_dx(df: pd.DataFrame):
     '''Keep only rows with first GBM diagnoses. Exits pipe because further processing is done elsewhere.'''
 
     def keep_gbm_dx_rows_via_regex(df: pd.DataFrame) -> pd.DataFrame:
-        '''Naive method: Identify, by eye, and mark all the GBM synonyms (synonyms/typos which were found comprehensively (in the xlsx)).'''
+        '''Naive method: Identify, by eye, and mark all the GBM synonyms (synonyms/typos which were found comprehensively (in the spreadsheet)).'''
 
         rows_GBM = df.copy()
 
@@ -207,9 +256,14 @@ def deduplicate_gbm_dx(df: pd.DataFrame):
 
         '''TK Link (Grade IV Astrocytoma == GBM): https://stanfordhealthcare.org/content/shc/en/medical-conditions/brain-and-nerves/astrocytoma/about-this-condition/stages.html/'''
 
+		'''While the dataset (purportedly) contains only GBM patients, excluding non-GBM patients must be performed.  This is because the DATE of GBM diagnosis is a very important variable in this survival analysis.  In turn, without an explicit GBM (or similar glioma, to avoid over-exclusion) diagnosis, there can be no such date of diagnosis.'''
         # Matches 2879 (out of 19887) rows and 1025 (out of 1210) unique patients
         # 1025 is to be expected because only 1033 is obtained after removing the generic 'neoplasm's and 'tumor's, without even excluding e.g. neuroblastomas and non-astrocytic gliomas.
         contain_pattern = r'gi?li?o?(?:(?:bo?l?astr?|sarc)oma|matosis cerebri)|gbm|gmb|(?:anaplastic [a-z]*|GRADE IV |malignant )astrocyt?oma|(?:glioma )?(?:high grade|grade 3or 4)(?: glioma)?'
+        '''r"gi?li?o?(?:(?:bo?l?astr?|sarc)oma|matosis cerebri)" --- matches "gliomatisis cerebri", "gliosarcoma", and misspellings of "glioblastoma".'''
+        '''r"gbm|gmb" --- matches the abbreviation (and its misspelling) of glioblastoma.'''
+        '''r"(?:anaplastic [a-z]*|GRADE IV |malignant )astrocyt?oma" --- matches anaplastic, grade IV, or malignant astrocytomas, which were only separated from glioblastoma classification in 2021 TK year'''
+        '''r"(?:glioma )?(?:high grade|grade 3or 4)(?: glioma)?" --- matches high grade (also known as grade 3 or 4) glioma.  As mentioned above, the classification of glioblastoma was only separated from that of grade 4 glioma in 2021 TK year.  Includes the false positive of grade 3 glioma, which has never been equivalent to glioblastoma.'''
         # TK include further justification (links) e.g for gliosarcoma and gliomatosis cerebri
         # "High grade" (the same as "grade 3or 4") glioma included because (before 2021) GBM is grade 4 glioma (TK cite), and to include as many GBM diagnoses as possible.
 

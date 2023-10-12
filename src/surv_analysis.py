@@ -35,11 +35,13 @@ def format_4_assumption_tests(filepath_dx: str='../intermediates/only_GBM_dx_dat
     # Load and deserialize demographics DataFrame
     demo_info = pd.read_pickle(resolve_path(filepath_demo))
 
-    '''Method 1: Simply removing missing demographic information'''
+    '''Method 1: Treating missingness as a separate categorical variable (for each nullable variable)'''
     print(f'Number of rows in demo:\t{len(demo_info)}')
     demo_info = demo_info.dropna()
     print(f'Number of rows in demo after dropping nulls:\t{len(demo_info)}')
     # TK fill in lab_data stuff
+    
+    '''Method 2: Imputing missing values (multiple imputation: 5 times)'''
 
     # Set-intersect indices to get common patients between drugs and diagnostic datasets
     common_med_dx_index = med_hist.index.intersection(rows_GBM.index)

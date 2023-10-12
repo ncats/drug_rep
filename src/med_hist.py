@@ -8,8 +8,7 @@ from datetime import datetime  # for datetime parsing
 import re  # for string substitution
 import json
 from sksurv.preprocessing import OneHotEncoder
-from rxnorm_query import query_findRxcuiByString
-from util import resolve_path
+from util import resolve_path, query_findRxcuiByString, CSV_DIR
 
 
 # TK update this (and legacy naming) because i'm not using `drug_ingredients` column
@@ -19,10 +18,10 @@ Convention: 'Drugs' includes both 'orders' AND 'ingreds'.
 Convention: The above applies to the naming of functions and variables in this file
 '''
 
-FILEPATH_MEDICATION='C:/Users/Admin_Calvin/Microwave_Documents/NIH/data/Updated_All_Med_Data_for_MIS_and_CRIS_sent_to_Zhu_1-18-2023.xlsx - MIS+CRIS_Meds.csv'
+FILENAME_MEDICATION='Updated_All_Med_Data_for_MIS_and_CRIS_sent_to_Zhu_1-18-2023.xlsx - MIS+CRIS_Meds.csv'
 
 
-def preprocess_meds_df(filepath: str=FILEPATH_MEDICATION) -> pd.DataFrame:
+def preprocess_meds_df(filepath: str=CSV_DIR+FILENAME_MEDICATION) -> pd.DataFrame:
     '''Does not exit pipe.'''
 
     print('Preprocessing data...')
@@ -41,7 +40,7 @@ def preprocess_meds_df(filepath: str=FILEPATH_MEDICATION) -> pd.DataFrame:
         'Order_Name': 'str',
         'drug_type': drug_type_type,
         'drug_ingredients': 'str',
-        'Category': 'str',
+        # 'Category': 'str',
         'top_therapeutic_category': 'category',  # inferred
         'therapeutic_category': 'category',  # inferred
         'Order_Note': 'str',
@@ -108,7 +107,7 @@ def preprocess_meds_df(filepath: str=FILEPATH_MEDICATION) -> pd.DataFrame:
 
 
 def despace_col_names(formatted_df: pd.DataFrame) -> pd.DataFrame:
-    '''Remove spaces in column names (so they won't get affected by `split(' ')` later on)---a purely aesthetic change.'''
+    '''Remove spaces in column names (so they won't get affected by `split(' ')` later on)---a purely cosmetic change.'''
     formatted_df = formatted_df.rename(
         columns={col: col.replace(' ', '_') for col in formatted_df.columns})
     return formatted_df
@@ -121,30 +120,27 @@ def retain_confirmed_admin(unconfirmed_df: pd.DataFrame,
 
     print('Filtering out unconfirmed administration...')
 
-    print(
-        f'Number of Unconfirmed rows: {len(unconfirmed_df)}\tNumber of Unique Unconfirmed: {unconfirmed_df.index.nunique()}')
+    print(f'Number of Unconfirmed rows: {len(unconfirmed_df)}\tNumber of Unique Unconfirmed: {unconfirmed_df.index.nunique()}')
 
     def decide_confirmed_admin(row) -> str:
         '''Should account for every row.'''
-        if row['Admin_Status'] == 'Performed':  # CRIS
-            return 'YES'
+        if include_unconfirmed: return 'YES'  # Overriding flag
         else:
-            if row['Take_Home_Flag'] == '0':  # CRIS; admin'd in-clinic
-                return 'YES'
-            elif row['Take_Home_Flag'] == '1':  # CRIS; taken-home
-                return 'NO'  # don't know if admin'd; filter out to be safe TK include AND not include
-            else:  # MIS
-                if row['Order_Status'] == 'GIV':
-                    return 'YES'
-                else:
-                    if pd.notna(row['Order_Note']):
-                        return 'CHECK'  # yes order note means generally admin'd
-                    else:
-                        return 'NO'  # no order note means don't know if admin'd; filter out to be safe TK include AND not include
-    # Decide using above function
+		    if row['Admin_Status'] == 'Performed':  # CRIS
+		        return 'YES'
+		    else:
+		        if row['Take_Home_Flag'] == '0':  # CRIS; admin'd in-clinic
+		            return 'YES'
+		        elif row['Take_Home_Flag'] == '1':  # CRIS; taken-home
+		            return 'NO'  # don't know if admin'd; filter out to be safe
+		        else:  # MIS
+		            if row['Order_Status'] == 'GIV':
+		                return 'YES'
+		            else: return 'YES'  # No other potential hints of confirmation
+    # Decide using above function (decision tree)
     unconfirmed_df['mark_confirmed_admin'] = unconfirmed_df.apply(decide_confirmed_admin, axis='columns')
-    # Filter using above decision ('CHECK's are included to be lenient, but have false positives)
-    unconfirmed_df = unconfirmed_df[unconfirmed_df['mark_confirmed_admin'].isin(['YES', 'CHECK'] + (['NO'] if include_unconfirmed else []))]
+    # Filter using above decision
+    unconfirmed_df = unconfirmed_df[unconfirmed_df['mark_confirmed_admin'].isin(['YES']))]
 
     '''CRIS: `Event_Primary_Date_Time` represents date of ORDER (not necessarily administration), so default to `Admin Performed Dt`.'''
     '''MIS: `Event_Primary_Date_Time` represents date of administration (`Admin Performed Dt` == NULL), so default to `Event_Primary_Date_Time`'''
@@ -155,8 +151,7 @@ def retain_confirmed_admin(unconfirmed_df: pd.DataFrame,
         # 'Administration_Date' is instantiated and assigned as expected
         unconfirmed_df['Administration_Date'] = unconfirmed_df['Admin_Performed_Dt'].fillna(unconfirmed_df['Event_Primary_Date_Time'])
 
-    print(
-        f'Number of Confirmed rows: {len(unconfirmed_df)}\tNumber of Unique Confirmed: {unconfirmed_df.index.nunique()}')
+    print(f'Number of Confirmed rows: {len(unconfirmed_df)}\tNumber of Unique Confirmed: {unconfirmed_df.index.nunique()}')
 
     print('Filtering out unconfirmed administration done.\n')
 
@@ -373,7 +368,7 @@ def save_tc_and_ttc_countplot(confirmed_df: pd.DataFrame):
 
     # Sort by `counts` (descending)
     confirmed_df_counts = (confirmed_df.groupby(['therapeutic_category',
-                                        'top_therapeutic_category'])
+                                        'top_therapeutic_category'], observed=False)
                         .size().reset_index(name='counts').sort_values(by='counts', ascending=False))
 
     # Filter out `therapeutic_category`s with nil counts
@@ -435,14 +430,14 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
                             include_pre_GBM_orders: bool = False,
                             save_final_df: bool = True):
     '''Request RxCUIs for drugs, as standardization.
-        Exits pipe to avoid calling API idempotently (idempotently generally).'''
+        Exits pipe to avoid calling API idempotently (read: idempotent in general).'''
 
     print('Obtaining RxCUIs from drugs...')
 
     # Select and copy `Order_Name` from main DataFrame.
     drugs = drugs_df[['Order_Name']]
 
-    '''Take advantage of `sksurv`'s `OneHotEncoder` not to one-hot encode drug administration data, but encode drug administration FREQUENCY.  Since each Subject can correspond to multiple rows (i.e. multiple adminstrations), one can vector-sum the rows for a given Subject to obtain drug administration FREQUENCY.'''
+    '''Take advantage of `sksurv`'s `OneHotEncoder` NOT per se, but to encode drug administration FREQUENCY.  Since each Subject can correspond to multiple rows (i.e. multiple adminstrations), one can vector-sum the rows for a given Subject to obtain drug administration FREQUENCY.'''
     # For the one-hot encoding, cast to category type
     drugs = drugs.astype('category')
     # One-hot encode the drug administration (independent) variable (spread out over multiple columns (corresponding to the multiple different drugs))
@@ -455,14 +450,13 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
         columns={col: col.replace('Order_Name=', '') for col in encoded_drugs.columns})
     with open(resolve_path('../intermediates/drugs_in_onehot.json'), 'w') as file:
         json.dump(encoded_drugs.columns.tolist(), file)
-
     # To obtain administration frequency, consolidate (by vector-summing the rows with same index) the duplicate `Subject` rows (each representing one administration/appointment)
-    dedup_drugs = encoded_drugs.groupby(encoded_drugs.index).sum()
+    dedup_drugs = encoded_drugs.groupby(encoded_drugs.index, observed=False).sum()
 
     print(dedup_drugs.info())
 
     def legalize_string_4_rxnorm(string: str) -> str:
-        '''The below text processing is RxNorm-specific.'''
+        '''This function for text processing is designed to work with RxNorm and its quirks.'''
 
         # Rudimentary text processing (spacing out "/"-divided names),
         # e.g. "Calcium Carbonate/Vitamin D" --> "Calcium Carbonate / Vitamin D"
@@ -470,9 +464,9 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
         # Rudimentary text processing (spacing out "-"-divided names),
         # e.g. "amlodipine-valsartan tablet" --> "amlodipine - valsartan tablet"
                         .replace('-', ' - ')
-        # RxNorm doesn't accept commas (see: https://ndclist.com/rxnorm-lookup)
+        # RxNorm doesn't accept commas (try: https://ndclist.com/rxnorm-lookup)
                         .replace(',', ''))
-        # RxNorm doesn't accept parentheses (see: https://ndclist.com/rxnorm-lookup), so move parenthesized word(s) (sometimes entity names) to the front of the string
+        # RxNorm doesn't accept parentheses (try: https://ndclist.com/rxnorm-lookup), so move parenthesized word(s) (sometimes entity names) to the front of the string
         # TK why isn't this working??
         string = re.sub(r'(.*)\(([a-z\sA-Z]{2,})\)(.*)', r'\2 \1 \3', string)
         # RxNorm doesn't accept parentheses
@@ -646,29 +640,38 @@ def obtain_rxcui_from_drugs(drugs_df: pd.DataFrame, verbose: bool=False,
 
     # To obtain administration frequency, consolidate (by vector-summing the columns with same column names (RxCUI)) the duplicate columns to complete the normalization
     normalized_drugs = normalized_drugs.groupby(
-        normalized_drugs.columns, axis='columns').sum()
-    print(
-        f'Number of drug features before normalization:\t{len(dedup_drugs.columns)}\nNumber of drug features after normalization: \t{len(normalized_drugs.columns)}')
+        normalized_drugs.columns, axis='columns', observed=False).sum()
+    print(f'Number of drug features before normalization:\t{len(dedup_drugs.columns)}\nNumber of drug features after normalization: \t{len(normalized_drugs.columns)}')
 
+	'''Now we want the drugs' therapeutic categories to safeguard against low sample sizes for individual drugs.'''
+	print('Obtaining therapeutic categories of drugs...')
+	# Select and copy `therapeutic_category` (henceforth 'T.C.') from main DataFrame.
+    tc = drugs_df[['therapeutic_category']]
+
+    '''Take advantage of `sksurv`'s `OneHotEncoder` NOT per se, but to encode administered T.C. FREQUENCY.  Since each Subject can correspond to multiple rows (i.e. multiple administered T.C.s), one can vector-sum the rows for a given Subject to obtain administered T.C. FREQUENCY.'''
+    # For the one-hot encoding, cast to category type
+    tc = tc.astype('category')
+    # One-hot encode the drug administration (independent) variable (spread out over multiple columns (corresponding to the multiple different drugs))
+    print('One-hot encoding...')
+    # Fit and transform the data
+    encoded_tc = OneHotEncoder().fit_transform(pd.DataFrame(tc))
+    print('One-hot encoding done.\n')
+
+    # To obtain administration frequency, consolidate (by vector-summing the rows with same index) the duplicate `Subject` rows (each representing one administration/appointment)
+    tallied_tc = encoded_tc.groupby(encoded_tc.index, observed=False).sum()
+    print('Obtaining therapeutic categories of drugs done.')
+    
+   	'''Save the combined DataFrame.'''
     if save_final_df:
         # For human-readability, restore 'Order_Name=' prefix which was added by `OneHotEncoder` and which was removed.
         normalized_drugs = normalized_drugs.rename(
             columns={col: 'Order_Name=' + col for col in normalized_drugs.columns})
+            
+        # Combine `normalized_drugs` and `tallied_tc` (obviously keeping all drugs because T.C. information won't make sense without it)
+        combined = normalized_drugs.join(tallied_tc, how='left')
 
         # Serialize (so we don't have to repeatedly use the API) the DataFrames
-        normalized_drugs.to_pickle(resolve_path(
-            f'../intermediates/explanatory_drugs{str(include_unconfirmed)}{str(include_pre_GBM_orders)}.pkl'))
-
-
-
-def consolidate_similar_rxcs(rxcs_df: pd.DataFrame):
-    '''To consolidate identical drugs (which may have been normalized with different RxCUIs), use the _TK RxClass API to create a similarity matrix (more like "identicality" matrix), from which pairs of identical drugs can be identified and consolidated.'''
-    pass
-
-
-
-def filter_by_frequency(consolid_df: pd.DataFrame):
-    pass
+        combined.to_pickle(resolve_path(f'../intermediates/explanatory_drugs{str(include_unconfirmed)}{str(include_pre_GBM_orders)}.pkl'))
 
 
 
@@ -697,7 +700,7 @@ for b1 in [True, False]:  # Whether or not to include unconfirmed admins
 def obtain_top_n_orders(confirmed_df: pd.DataFrame, n_included: int=100):
     '''Getting top-n most used medications naively via `Order_Name` (free text). Not intended to be part of any longstanding pipeline.'''
     # Count up most ordered medications
-    order_counts_confirmed_df = confirmed_df.groupby('Order_Name').size().reset_index(name='order_counts')
+    order_counts_confirmed_df = confirmed_df.groupby('Order_Name', observed=False).size().reset_index(name='order_counts')
     # Sort the counts
     order_counts_confirmed_df = order_counts_confirmed_df.sort_values(by='order_counts', ascending=False)
     # Save the results
@@ -714,7 +717,7 @@ def obtain_top_n_ingreds(confirmed_df: pd.DataFrame, n_included: int=100):
     # Melt said DataFrame so that each ingredient occupies a different row
     melted_split_ingredients_df = pd.melt(split_ingredients_df, id_vars=['Subject'], value_name='split_ingredients')
     # Count up most used ingredients
-    counts_melted_split_ingredients_df = melted_split_ingredients_df.groupby('split_ingredients').size().reset_index(name='ingredient_counts')
+    counts_melted_split_ingredients_df = melted_split_ingredients_df.groupby('split_ingredients', observed=False).size().reset_index(name='ingredient_counts')
     # Sort the counts
     counts_melted_split_ingredients_df = counts_melted_split_ingredients_df.sort_values(by='ingredient_counts', ascending=False)
     # Save the results
