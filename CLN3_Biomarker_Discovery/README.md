@@ -4,7 +4,7 @@
 #### This framework is composed of three components: 1) machine learning models with optimized imputation methods to analyze proteomics and laboratory data from CLN3 patients to identify protein candidates; 2) PPI network-based network analysis to prioritize candidates; and 3) corroboration using external gene expression datasets.
 
 #### Scripts folder  
-- 0.0_Data_imputation.R: Cleans the original proteomics data and laboratory tests collected from the clinical trial; evaluates different imputation methods and imputes the missing values using the best performing method.   
+- [0.0_Data_imputation.R](https://github.com/ncats/drug_rep/blob/main/CLN3_Biomarker_Discovery/Scripts/0.0_Data_imputation.R): Cleans the original proteomics data and laboratory tests collected from the clinical trial; evaluates different imputation methods and imputes the missing values using the best performing method.   
 - 1.1.1_Classification_model_setup.R: Builds up various machine learning models for the classification subset.  
 - 1.1.2_Classification_model_evaluation.R: Evaluates the models built in 1.1.1_Classification_model_setup.R to get the model with the best performance.  
 - 1.1.3_Classification_feature_selection.R: Selects a list of protein features from the classification subset using the best model identified in 1.1.2_Classification_model_evaluation.R.  
