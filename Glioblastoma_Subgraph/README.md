@@ -4,6 +4,8 @@ Glioblastoma (GBM) is the most aggressive and common malignant primary brain tum
 
 We developed a Glioblastoma-based Biomedical Profile Network (GBPN) by extracting and integrating biomedical information pertinent to GBM-related diseases from the [NCATS GARD Knowledge Graph (NGKG)](https://pubmed.ncbi.nlm.nih.gov/33183351/). To generate focused subgraphs, we further clustered the GBPN based on modularity classes which resulted in multiple subgraphs, named mc_GBPN. We identified high-influence nodes by performing network analysis over the mc_GBPN and manually validated those nodes that could be potential drug repositioning candidates for GBM.
 
+### Publication
+- https://link.springer.com/article/10.1186/s13023-023-02876-2
 
 ### Lab Notebook 
 
