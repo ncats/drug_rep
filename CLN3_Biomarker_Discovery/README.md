@@ -1,6 +1,6 @@
 ##     A Computational Biomarker Discovery Framework for CLN3 Disease
 
-#### CLN3 disease is a rare, inherited neurodegenerative disorder characterized by progressive cognitive decline, seizures, and vision loss. This folder contains the information related to a computational biomarker discovery framework that built various machine learning models to identify novel biomarker candidates for CLN3 disease by analyzing proteomics data and laboratory tests collected from participants in a CLN3 prospective, observational study.  
+#### CLN3 disease is a rare, inherited neurodegenerative disorder characterized by progressive cognitive decline, seizures, and vision loss. This [folder](https://github.com/ncats/drug_rep/tree/main/CLN3_Biomarker_Discovery) contains the information related to a computational biomarker discovery framework that built various machine learning models to identify novel biomarker candidates for CLN3 disease by analyzing proteomics data and laboratory tests collected from participants in a CLN3 prospective, observational study.  
 #### This framework is composed of three components: 1) machine learning models with optimized imputation methods to analyze proteomics and laboratory data from CLN3 patients to identify protein candidates; 2) PPI network-based network analysis to prioritize candidates; and 3) corroboration using external gene expression datasets.
 
 #### Scripts folder  
