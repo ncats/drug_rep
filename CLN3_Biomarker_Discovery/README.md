@@ -22,5 +22,3 @@
 - [all_protines_ranked_by_overall_metrics.csv](https://github.com/ncats/drug_rep/blob/main/CLN3_Biomarker_Discovery/Results/all_protines_ranked_by_overall_metrics.csv): Contains the protein features ranked by centrality based on their Protein-Protein Interaction (PPI) network (resulted from 2.1.2_PPI_hub_genes.R).  
 - [RF_top_20_features_barplot.pdf](https://github.com/ncats/drug_rep/blob/main/CLN3_Biomarker_Discovery/Results/RF_top_20_features_barplot.pdf): Bar plots of the top 20 features’ importance from the random forest model (resulted from 1.2.2_Disease_severity_feature_selection.R).   
 
-
-<img width="468" height="647" alt="image" src="https://github.com/user-attachments/assets/1a520619-5aae-4d71-9e59-3fde3e8f65cb" />
