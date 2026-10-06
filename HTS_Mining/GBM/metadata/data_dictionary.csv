@@ -1,0 +1,118 @@
+field,description,source,unit,notes
+Protocol Name,Original source protocol or dataset name for the screening record.,raw primary-screen workbooks,,Retained exactly as provided; not normalized.
+Sample ID,Original NCATS sample identifier for the screened compound/sample.,raw primary-screen workbooks,,Retained exactly as provided.
+Sample Data Type,Source sample data type field.,raw primary-screen workbooks,,Retained exactly as provided.
+AC50 (uM),Half-maximal activity concentration reported in the source workbook.,raw primary-screen workbooks,micromolar (uM),No pAC50 calculation was performed.
+CC-v2,"Source curve class value, version 2.",raw primary-screen workbooks,,Source field retained as provided.
+Efficacy,Efficacy value reported in the source workbook.,raw primary-screen workbooks,source assay response scale,Source field retained as provided.
+Max Resp,Maximum assay response reported in the source workbook.,raw primary-screen workbooks,source assay response scale,Source field retained as provided.
+Structure,Source chemical structure field.,raw primary-screen workbooks,,Source field retained as provided.
+Metabolic Stability [m],Metabolic stability field reported in the source workbook.,raw primary-screen workbooks,minutes or source-defined unit,Definition/unit should be confirmed with assay documentation.
+Permeability [1e-6 cm/sec],Permeability field reported in the source workbook.,raw primary-screen workbooks,1e-6 cm/sec,Source field retained as provided.
+Solubility [ug/ml],Solubility field reported in the source workbook.,raw primary-screen workbooks,ug/ml,Source field retained as provided.
+Drug Name,Source drug or compound name field.,raw primary-screen workbooks,,Source field retained as provided.
+Assay Plate ID,Source assay plate identifier.,raw primary-screen workbooks,,Source field retained as provided.
+Supplier ID,Source supplier identifier.,raw primary-screen workbooks,,Source field retained as provided.
+Supplier,Source supplier name.,raw primary-screen workbooks,,Source field retained as provided.
+Library,Source library or source library-batch label.,raw primary-screen workbooks,,Values may include source batch labels such as 2019_NPC_01; retained exactly as provided.
+Log AC50 (M),Log10 AC50 value in molar units reported in the source workbook.,raw primary-screen workbooks,log10 molar,Source field retained as provided.
+Ligand Efficiency,Ligand efficiency field reported in the source workbook.,raw primary-screen workbooks,,Source field retained as provided.
+Sample Name,Original compound/sample display name when available.,raw primary-screen workbooks,,Source missing markers are retained exactly.
+Alias,Source alias field.,raw primary-screen workbooks,,Source field retained as provided.
+CC-v1,"Source curve class value, version 1.",raw primary-screen workbooks,,Source field retained as provided.
+LEC,Source LEC field.,raw primary-screen workbooks,,Source field retained as provided; definition to be confirmed with assay documentation.
+BEI,Source BEI field.,raw primary-screen workbooks,,Source field retained as provided; definition to be confirmed with assay documentation.
+SEI,Source SEI field.,raw primary-screen workbooks,,Source field retained as provided; definition to be confirmed with assay documentation.
+Data Range,Source assay data range field.,raw primary-screen workbooks,,Source field retained as provided.
+Inf Activity,Infinite-activity/asymptote field reported in the source workbook.,raw primary-screen workbooks,source assay response scale,Source field retained as provided.
+Hill Coef,Hill coefficient reported in the source workbook.,raw primary-screen workbooks,,Source field retained as provided.
+PValue,P-value field reported in the source workbook.,raw primary-screen workbooks,,Source field retained as provided.
+R2,R-squared fit statistic reported in the source workbook.,raw primary-screen workbooks,,Source field retained as provided.
+AC50_2 (uM),Secondary AC50 field reported in the source workbook.,raw primary-screen workbooks,micromolar (uM),Source field retained as provided.
+Log AC50 2,Secondary log10 AC50 field reported in the source workbook.,raw primary-screen workbooks,log10 molar,Source field retained as provided.
+Hill Coef 2,Secondary Hill coefficient field reported in the source workbook.,raw primary-screen workbooks,,Source field retained as provided.
+Fraction,Source fraction field.,raw primary-screen workbooks,,Source field retained as provided.
+Sample ID2,Secondary sample identifier field in the source workbook.,raw primary-screen workbooks,,Source field retained as provided.
+Tox21 ID,Source Tox21 identifier field.,raw primary-screen workbooks,,Source field retained as provided.
+Zero Activity,Source zero-activity field.,raw primary-screen workbooks,,Source field retained as provided.
+User Flag,Source user flag field.,raw primary-screen workbooks,,Source field retained as provided.
+Max Read1,Maximum readout field reported in the source workbook.,raw primary-screen workbooks,source assay response scale,Source field retained as provided.
+Max Data,Maximum data value reported in the source workbook.,raw primary-screen workbooks,source assay response scale,Source field retained as provided.
+Min Data,Minimum data value reported in the source workbook.,raw primary-screen workbooks,source assay response scale,Source field retained as provided.
+AUC,Area-under-curve value reported in the source workbook.,raw primary-screen workbooks,,Source field retained as provided.
+AUC Fit,Area-under-curve fit field reported in the source workbook.,raw primary-screen workbooks,,Source field retained as provided.
+Cmpd Plate ID,Source compound plate identifier.,raw primary-screen workbooks,,Source field retained as provided.
+Comment,Source comment field.,raw primary-screen workbooks,,Source field retained as provided.
+Log AC50-,Lower-bound log AC50 field reported in the source workbook.,raw primary-screen workbooks,log10 molar,Source field retained as provided.
+Log AC50+,Upper-bound log AC50 field reported in the source workbook.,raw primary-screen workbooks,log10 molar,Source field retained as provided.
+Inf Activity-,Lower-bound infinite-activity/asymptote field reported in the source workbook.,raw primary-screen workbooks,source assay response scale,Source field retained as provided.
+Inf Activity+,Upper-bound infinite-activity/asymptote field reported in the source workbook.,raw primary-screen workbooks,source assay response scale,Source field retained as provided.
+Custom 2,Source custom field 2.,raw primary-screen workbooks,,Source field retained as provided.
+Custom 1,Source custom field 1.,raw primary-screen workbooks,,Source field retained as provided.
+NCGC Unique ID,Source NCGC unique identifier field.,raw primary-screen workbooks,,Source field retained as provided.
+Mapping ID,Source mapping identifier field.,raw primary-screen workbooks,,Source field retained as provided.
+Drug ID,Source drug identifier field.,raw primary-screen workbooks,,Source field retained as provided.
+Assay Name,Source assay name field.,raw primary-screen workbooks,,Source field retained as provided.
+Hash Key(24),Source hash key field.,raw primary-screen workbooks,,Source field retained as provided.
+MLSMR Compound Class,Source MLSMR compound class field.,raw primary-screen workbooks,,Source field retained as provided.
+Primary MOA,Source primary mechanism-of-action field.,raw primary-screen workbooks,,Source field retained as provided.
+Origin,Source origin field.,raw primary-screen workbooks,,Source field retained as provided.
+Solvent,Source solvent field.,raw primary-screen workbooks,,Source field retained as provided.
+Salt Code,Source salt code field.,raw primary-screen workbooks,,Source field retained as provided.
+Purity,Source purity field.,raw primary-screen workbooks,,Source field retained as provided.
+Purity Rating,Source purity rating field.,raw primary-screen workbooks,,Source field retained as provided.
+MW,Molecular weight field reported in the source workbook.,raw primary-screen workbooks,,Source field retained as provided.
+PubChem SID,Source PubChem Substance ID field.,raw primary-screen workbooks,,This field was present in the raw workbook and was not added during staging.
+CAS#,Source CAS registry number field.,raw primary-screen workbooks,,Source field retained as provided.
+Gene Symbol,Source gene-symbol field.,raw primary-screen workbooks,,Source field retained as provided.
+Gene ID,Source gene identifier field.,raw primary-screen workbooks,,Source field retained as provided.
+Tanimoto,Source Tanimoto similarity field.,raw primary-screen workbooks,,Source field retained as provided.
+Layer Index,Source layer index field.,raw primary-screen workbooks,,Source field retained as provided.
+Data Points,Number of data points field reported in the source workbook.,raw primary-screen workbooks,,Source field retained as provided.
+Mask No,Source mask number field.,raw primary-screen workbooks,,Source field retained as provided.
+Log Dye Conc,Source log dye concentration field.,raw primary-screen workbooks,,Source field retained as provided.
+Report Flag,Source report flag field.,raw primary-screen workbooks,,Source field retained as provided.
+Assay Protocol ID,Source assay protocol identifier.,raw primary-screen workbooks,,Source field retained as provided.
+Mask Flags,Source mask flags field.,raw primary-screen workbooks,,Source field retained as provided.
+Sample Replicate,Source sample replicate field.,raw primary-screen workbooks,,Source field retained as provided.
+Plate Replicate,Source plate replicate field.,raw primary-screen workbooks,,Source field retained as provided.
+Measure Time,Source measurement time field.,raw primary-screen workbooks,,Source field retained as provided.
+Replicate IDs,Source replicate identifier field.,raw primary-screen workbooks,,Source field retained as provided.
+Data Mode,Source assay data mode field.,raw primary-screen workbooks,,Source field retained as provided.
+Assay Outcome,Source assay outcome field.,raw primary-screen workbooks,,Source field retained as provided.
+Phenotype,Source phenotype field.,raw primary-screen workbooks,,Source field retained as provided.
+Activity Score,Source activity score field.,raw primary-screen workbooks,,Source field retained as provided.
+Confirmation Flag,Source confirmation flag field.,raw primary-screen workbooks,,Source field retained as provided.
+Control Flag,Source control flag field.,raw primary-screen workbooks,,Source field retained as provided.
+Conc ID,Source concentration identifier field.,raw primary-screen workbooks,,Source field retained as provided.
+Experiment Set,Source experiment set field.,raw primary-screen workbooks,,Source field retained as provided.
+Team,Source team field.,raw primary-screen workbooks,,Administrative source field retained as provided.
+Scientist,Source scientist field.,raw primary-screen workbooks,,Administrative source field retained as provided.
+IC50 (uM),IC50 field reported in the source workbook.,raw primary-screen workbooks,micromolar (uM),Source field retained as provided.
+Data0,Source primary assay data field Data0.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data1,Source primary assay data field Data1.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data2,Source primary assay data field Data2.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data3,Source primary assay data field Data3.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data4,Source primary assay data field Data4.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data5,Source primary assay data field Data5.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data6,Source primary assay data field Data6.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data7,Source primary assay data field Data7.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data8,Source primary assay data field Data8.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data9,Source primary assay data field Data9.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data10,Source primary assay data field Data10.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data11,Source primary assay data field Data11.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data12,Source primary assay data field Data12.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data13,Source primary assay data field Data13.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data14,Source primary assay data field Data14.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data15,Source primary assay data field Data15.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data16,Source primary assay data field Data16.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data17,Source primary assay data field Data17.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data18,Source primary assay data field Data18.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data19,Source primary assay data field Data19.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data20,Source primary assay data field Data20.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data21,Source primary assay data field Data21.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data22,Source primary assay data field Data22.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data23,Source primary assay data field Data23.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Data24,Source primary assay data field Data24.,raw primary-screen workbooks,source assay response scale or source-defined unit,Source field retained as provided; exact concentration/response mapping should be confirmed with assay documentation.
+Sample Data ID,Source sample data identifier.,raw primary-screen workbooks,,Source field retained as provided.
+[blank column header],Blank source column header retained from the source worksheet.,"Data/HTS_CellLine_raw/GBM cells-NPC primary screen-results.xlsx, sheet H4, column 117",,Column has a blank header and blank values; retained to preserve worksheet shape.
